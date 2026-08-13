@@ -3,11 +3,14 @@ mod tokenizer;
 
 use tokenizer::Tokenizer;
 
+
+use std::fs;
 fn main() {
-    let source: String = String::from("let x1 = 10 + 5;");
+    let source: String = fs::read_to_string("morph/test.mr").unwrap();
+
     let mut tokenizer: Tokenizer = Tokenizer::new(source);
 
-    let tokens = tokenizer.tokenize();
+    let tokens: Vec<grammar::Token> = tokenizer.tokenize();
 
     println!("{:?}", tokens);
 
