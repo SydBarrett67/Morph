@@ -1,47 +1,85 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Error};
 
-use crate::ast::{ Expression, Node, Operator };
+use crate::ast::{ Expression, Statement, Operator };
+
+#[derive(Debug)]
+pub enum InterpreterError {
+    Error(String)
+}
 
 pub struct Interpreter {
-    ast: Node,
+    ast: Statement,
     pub variables: HashMap<String, i32>,
 }
 
 impl Interpreter {
-    pub fn new(ast: Node) -> Self {
+    pub fn new(ast: Statement) -> Self {
         Self {
             ast: ast,
             variables: HashMap::new(),
         }
     }
 
-    pub fn eval_expr(statement: Expression) {
+    pub fn eval_expr(&self, statement: &Expression) -> Result<i32, InterpreterError> {
+        match statement {
 
+            Expression::Number(value) => {
+                Ok(*value)
+            }
+
+            Expression::BinaryExpression(op, lhv , rhv ) => {
+                match op {
+                    Operator::Add => {
+                        Ok(self.eval_expr(lhv)? + self.eval_expr(rhv)?)
+                    }
+
+                    _ => { Err(
+                        InterpreterError::Error(
+                            String::from("InterpreterError: Binary expression error.")
+                        )
+                    ) }
+                }
+            }
+
+
+            _ => { Err(
+                InterpreterError::Error(
+                    String::from("InterpreterError: Binary expression error.")
+                )
+            ) }
+        }
     }
 
-    pub fn interpret(&mut self) {
+    pub fn interpret(&mut self) -> Result<(), InterpreterError>{
         match self.ast {
-            Node::Root(ref nodes) => {
+            Statement::Root(ref nodes) => {
                 // Main loop
                 for statement in nodes {
+                    println!("\n\nSTATEMENT: {:?}", statement);
                     match statement {
-                        Node::Let(
+                        Statement::Let(
                             Expression::Identifier(var_name),
-                            Expression::Number(var_value),
+                            expr
                         ) => {
                             self.variables.insert(
-                                var_name.clone(),
-                                *var_value
+                                String::from(var_name),
+                                self.eval_expr(&expr)?
                             );
                         }
 
-                        _ => {}
+                        _ => { 
+                            return Err(InterpreterError::Error(
+                                String::from("InterpreterError: execution failed.")
+                            ));
+                        }
                     }
-
                 }
 
+                Ok(())
             }
-            _ => {}
+            _ => { Err(InterpreterError::Error(
+                String::from("InterpreterError: AST root node error.")   
+            )) }
         }
     }
 }

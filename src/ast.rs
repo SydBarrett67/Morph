@@ -1,12 +1,12 @@
 #[derive(Debug)]
-pub enum Node {
-    // Root node
-    Root(Vec<Node>),
+pub enum Statement {
+    // Root Statement
+    Root(Vec<Statement>),
 
     // Variable declaration
     Let(
         Expression,
-        Expression,
+        Expression
     ),
 }
 #[derive(Debug)]

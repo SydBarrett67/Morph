@@ -21,14 +21,13 @@ fn main() {
 
     let mut parser: Parser = Parser::new(tokens);
 
-    let ast = parser.parse();
+    let ast: Result<ast::Statement, parser::ParserError> = parser.parse();
 
     println!("\n\n{:?}", ast);
 
-    let mut intepreter = Interpreter::new(Result::unwrap(ast));
+    let mut interpreter: Interpreter = Interpreter::new(Result::unwrap(ast));
 
-    intepreter.interpret();
-
-    println!("\n\n{:?}", intepreter.variables);
+    println!("\n\n{:?}", interpreter.interpret());
+    println!("\n\n{:?}", interpreter.variables);
 
 }
