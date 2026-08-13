@@ -78,6 +78,9 @@ impl Tokenizer {
                 // Operators
                 ';' => { chars_to_consume += 1 }
                 '+' => { chars_to_consume += 1 }
+                '-' => { chars_to_consume += 1 }
+                '/' => { chars_to_consume += 1 }
+                '*' => { chars_to_consume += 1 }
                 '=' => { chars_to_consume += 1 }
 
                 _ => { continue; }

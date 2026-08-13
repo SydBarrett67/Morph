@@ -1,4 +1,5 @@
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum Token {
     Identifier(String),
     Number(i32),
@@ -8,12 +9,17 @@ pub enum Token {
 }
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum Keyword {
     LET,
 }
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum Operand {
     EQUALS,
     PLUS,
+    MINUS,
+    STAR,
+    SLASH
 }
