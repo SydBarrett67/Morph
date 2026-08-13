@@ -1,6 +1,4 @@
-use crate::grammar::Token;
-use crate::grammar::Keyword;
-use crate::grammar::Operand;
+use crate::grammar::{ Token, Keyword, Operand };
 
 pub struct Tokenizer {
     source: Vec<char>,

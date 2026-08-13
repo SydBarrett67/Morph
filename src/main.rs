@@ -2,9 +2,11 @@ mod grammar;
 mod tokenizer;
 mod parser;
 mod ast;
+mod interpreter;
 
 use tokenizer::Tokenizer;
 use parser::Parser;
+use interpreter::Interpreter;
 
 
 use std::fs;
@@ -15,12 +17,18 @@ fn main() {
 
     let tokens: Vec<grammar::Token> = tokenizer.tokenize();
 
-    println!("{:?}", tokens);
+    println!("\n\n{:?}", tokens);
 
     let mut parser: Parser = Parser::new(tokens);
 
-    let AST = parser.parse();
+    let ast = parser.parse();
 
-    println!("{:?}", AST);
+    println!("\n\n{:?}", ast);
+
+    let mut intepreter = Interpreter::new(Result::unwrap(ast));
+
+    intepreter.interpret();
+
+    println!("\n\n{:?}", intepreter.variables);
 
 }
