@@ -31,6 +31,7 @@ impl Tokenizer {
         match word {
             "let"   => Token::Keyword(Keyword::LET),
             "+"     => Token::Operand(Operand::PLUS),
+            "-"     => Token::Operand(Operand::MINUS),
             "="     => Token::Operand(Operand::EQUALS),
             ";"     => Token::Semicolon,
             // Number or Identifier

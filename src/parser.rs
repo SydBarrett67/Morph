@@ -26,37 +26,67 @@ impl Parser {
         self.tokens.remove(0)
     }
 
-    pub fn parse_expr(&mut self) -> Result<Expression, ParserError> {
-        match self.consume() {
-            Token::Number(value) => {
-                match self.peek(0) {
-                    Some(Token::Operand(Operand::PLUS)) => {
-                        self.consume(); // +
-                        let rhs = self.parse_expr()?;
+    pub fn parse_factor(&mut self) -> Result<Expression, ParserError> {
+        match self.peek(0) {
 
-                        Ok(Expression::BinaryExpression(
-                            Operator::Add,
-                            Box::new(Expression::Number(value)),
-                            Box::new(rhs),
-                        ))
-                    }
+            Some(Token::Number(value)) => {
+                self.consume();
+                Ok(Expression::Number(*value))
+            }
 
-                    Some(Token::Semicolon) => {
-                        self.consume();
-                        Ok(Expression::Number(value))
-                    }
+            _ => Err(
+                ParserError::SyntaxError(
+                    String::from("ParserError: expected factor.")
+                )
+            )
+        }
+    }
 
-                    _ => { Err(
-                        ParserError::SyntaxError(
-                            String::from("")
-                        )
-                    ) }
-                }
+    pub fn parse_term(&mut self) -> Result<Expression, ParserError> {
+        let lhv = self.parse_factor()?;
+        match self.peek(0) {
+
+            Some(Token::Operand(Operand::STAR)) => {
+                self.consume();
+                Ok(
+                    Expression::BinaryExpression(
+                        Operator::Mul,
+                        Box::new(lhv),
+                        Box::new(self.parse_factor()?)
+                    )
+                )
             }
 
             _ => { Err(
                 ParserError::SyntaxError(
-                    String::from("")
+                    String::from("ParserError: expected term.")
+                )
+            )}
+        }
+    }
+
+    pub fn parse_expr(&mut self) -> Result<Expression, ParserError> {
+        let lhv = self.parse_term()?;
+        match self.peek(0) {
+            Some(Token::Semicolon) => {
+                Ok(lhv)
+            }
+
+            Some(Token::Operand(Operand::PLUS)) => {
+                self.consume();
+                let rhv = self.parse_term()?;
+                Ok(
+                    Expression::BinaryExpression(
+                        Operator::Add,
+                        Box::new(lhv),
+                        Box::new(rhv)
+                    )
+                )
+            }
+
+            _ => { Err(
+                ParserError::SyntaxError(
+                    String::from("ParserError: invalid expression.")
                 )
             ) }
         }
@@ -91,7 +121,7 @@ impl Parser {
 
                         _ => {
                             return Err(ParserError::SyntaxError(
-                                String::from("Unexpected use of 'let' Keyword.")
+                                String::from("ParserError: unexpected use of 'let' Keyword.")
                             ));
                         }
                     }
@@ -99,7 +129,7 @@ impl Parser {
 
                 _ => { 
                     return Err(ParserError::SyntaxError(
-                        String::from("Invalid syntax.")
+                        String::from("ParserError: invalid syntax.")
                     )); 
                 }
             }

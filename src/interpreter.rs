@@ -33,6 +33,18 @@ impl Interpreter {
                         Ok(self.eval_expr(lhv)? + self.eval_expr(rhv)?)
                     }
 
+                    Operator::Sub => {
+                        Ok(self.eval_expr(lhv)? - self.eval_expr(rhv)?)
+                    }
+
+                    Operator::Mul => {
+                        Ok(self.eval_expr(lhv)? * self.eval_expr(rhv)?)
+                    }
+
+                    Operator::Div => {
+                        Ok(self.eval_expr(lhv)? / self.eval_expr(rhv)?)
+                    }
+
                     _ => { Err(
                         InterpreterError::Error(
                             String::from("InterpreterError: Binary expression error.")
