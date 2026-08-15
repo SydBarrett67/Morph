@@ -1,146 +1,291 @@
-use crate::ast::{Expression, Operator};
-use crate::grammar::{ Operand, Token, Keyword };
-use crate::ast::Statement;
+use crate::ast::{Expression, Operator, Statement};
+use crate::grammar::{Keyword, Operand, Position, Token, TokenInfo};
 
 #[derive(Debug)]
 pub enum ParserError {
-    SyntaxError(String),
+    SyntaxError(
+        String,
+        Position
+    ),   
 }
 
 pub struct Parser {
-    tokens: Vec<Token>,
+    tokens: Vec<TokenInfo>,
+    position: usize,
 }
+
 impl Parser {
-    // Constructor
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: Vec<TokenInfo>) -> Self {
         Self {
-            tokens: tokens,
+            tokens,
+            position: 0,
         }
     }
 
-    pub fn peek(&self, look_ahead: usize) -> Option<&Token> {
-        self.tokens.get(look_ahead)
+    fn peek(&self) -> Option<&TokenInfo> {
+        self.tokens.get(self.position)
     }
 
-    pub fn consume(&mut self) -> Token {
-        self.tokens.remove(0)
+    fn consume(&mut self) -> Result<TokenInfo, ParserError> {
+        if self.position < self.tokens.len() {
+            let token = self.tokens[self.position].clone();
+            self.position += 1;
+            Ok(token)
+        } else {
+            Err(ParserError::SyntaxError(
+                String::from("ParserError: unexpected EOF."),
+                Position {
+                    line: 0,
+                    column: 0
+                }
+            ))
+        }
     }
 
     pub fn parse_factor(&mut self) -> Result<Expression, ParserError> {
-        match self.peek(0) {
-
-            Some(Token::Number(value)) => {
-                self.consume();
-                Ok(Expression::Number(*value))
+        match self.peek() {
+            Some(TokenInfo {
+                token: Token::Number(value),
+                ..
+            }) => {
+                let value = *value;
+                self.consume()?;
+                Ok(Expression::Number(value))
             }
 
-            _ => Err(
-                ParserError::SyntaxError(
-                    String::from("ParserError: expected factor.")
-                )
-            )
+            Some(TokenInfo {
+                token: Token::OpenParen,
+                ..
+            }) => {
+                self.consume()?;
+
+                let expr = self.parse_expr()?;
+
+                match self.peek() {
+                    Some(TokenInfo {
+                        token: Token::CloseParen,
+                        ..
+                    }) => {
+                        self.consume()?;
+                        Ok(expr)
+                    }
+
+                    Some(token) => Err(ParserError::SyntaxError(
+                        String::from("expected ')'."),
+                        token.pos.clone()
+                    )),
+                    None => Err(ParserError::SyntaxError(
+                        String::from("ParserError: expected ')', found EOF."),
+                        Position {
+                            line: 0,
+                            column: 0
+                        }
+                    )),
+                }
+            }
+
+            Some(TokenInfo {
+                token: Token::Identifier(name),
+                ..
+            }) => {
+                let name = name.clone();
+                self.consume()?;
+                Ok(Expression::Identifier(name))
+            }
+
+            Some(token) => Err(ParserError::SyntaxError(
+                String::from(
+                    format!("unexpected token: {:?}", token.token)
+                ),
+                token.pos.clone()
+            )),
+
+            None => Err(ParserError::SyntaxError(
+                String::from("ParserError: expected factor, found EOF."),
+                Position {
+                    line: 0,
+                    column: 0,
+                }
+            )),
         }
     }
-
     pub fn parse_term(&mut self) -> Result<Expression, ParserError> {
-        let lhv = self.parse_factor()?;
-        match self.peek(0) {
+        let mut lhs = self.parse_factor()?;
 
-            Some(Token::Operand(Operand::STAR)) => {
-                self.consume();
-                Ok(
-                    Expression::BinaryExpression(
-                        Operator::Mul,
-                        Box::new(lhv),
-                        Box::new(self.parse_factor()?)
-                    )
-                )
-            }
+        while let Some(token_info) = self.peek() {
+            let operator = match &token_info.token {
+                Token::Operand(Operand::STAR) => Operator::Mul,
+                Token::Operand(Operand::SLASH) => Operator::Div,
+                _ => break,
+            };
 
-            _ => { Err(
-                ParserError::SyntaxError(
-                    String::from("ParserError: expected term.")
-                )
-            )}
+            let operator = operator;
+            self.consume()?;
+
+            let rhs = self.parse_factor()?;
+
+            lhs = Expression::BinaryExpression(
+                operator,
+                Box::new(lhs),
+                Box::new(rhs),
+            );
         }
+
+        Ok(lhs)
     }
-
     pub fn parse_expr(&mut self) -> Result<Expression, ParserError> {
-        let lhv = self.parse_term()?;
-        match self.peek(0) {
-            Some(Token::Semicolon) => {
-                Ok(lhv)
-            }
+        let mut lhs = self.parse_term()?;
 
-            Some(Token::Operand(Operand::PLUS)) => {
-                self.consume();
-                let rhv = self.parse_term()?;
-                Ok(
-                    Expression::BinaryExpression(
-                        Operator::Add,
-                        Box::new(lhv),
-                        Box::new(rhv)
-                    )
-                )
-            }
+        while let Some(token_info) = self.peek() {
+            let operator = match &token_info.token {
+                Token::Operand(Operand::PLUS) => Operator::Add,
+                Token::Operand(Operand::MINUS) => Operator::Sub,
+                _ => break,
+            };
 
-            _ => { Err(
-                ParserError::SyntaxError(
-                    String::from("ParserError: invalid expression.")
-                )
-            ) }
+            let operator = operator;
+            self.consume()?;
+
+            let rhs = self.parse_term()?;
+
+            lhs = Expression::BinaryExpression(
+                operator,
+                Box::new(lhs),
+                Box::new(rhs),
+            );
         }
+
+        Ok(lhs)
     }
 
     pub fn parse(&mut self) -> Result<Statement, ParserError> {
-        let mut root_node: Statement = Statement::Root(Vec::new());
+        let mut nodes = Vec::new();
 
-        let mut statement: Statement;
-        while !self.tokens.is_empty() {
-            let token = self.consume();
+        while self.position < self.tokens.len() {
+            let token = self.consume()?;
 
-            match token {
+            let statement = match token.token {
+                // Variable declaration
                 Token::Keyword(Keyword::LET) => {
-                    match (
-                        self.consume(),
-                        self.consume(),
-                    )
-                    {
-                        (
-                            Token::Identifier(name),
-                            Token::Operand(Operand::EQUALS),
-                        ) => {
-                            let value = self.parse_expr()?;
+                    let identifier = self.consume()?;
+                    let equals = self.consume()?;
 
-                            statement =
-                                Statement::Let(
-                                    Expression::Identifier(name),
-                                    value,
-                                )
+                    let name = match identifier.token {
+                        Token::Identifier(name) => name,
+                        _ => {
+                            return Err(ParserError::SyntaxError(
+                                String::from(
+                                    "ParserError: expected identifier after 'let'.",
+                                ),
+                                Position {
+                                    line: 0,
+                                    column: 0,
+                                }
+                            ));
+                        }
+                    };
+
+                    match equals.token {
+                        Token::Operand(Operand::EQUALS) => {}
+
+                        _ => {
+                            return Err(ParserError::SyntaxError(
+                                String::from(
+                                    "ParserError: expected '=' after identifier.",
+                                ),
+                                Position {
+                                    line: 0,
+                                    column: 0,
+                                }
+                            ));
+                        }
+                    }
+
+                    let value = self.parse_expr()?;
+
+                    match self.peek() {
+                        Some(TokenInfo {
+                            token: Token::Semicolon,
+                            ..
+                        }) => {
+                            self.consume()?;
                         }
 
                         _ => {
                             return Err(ParserError::SyntaxError(
-                                String::from("ParserError: unexpected use of 'let' Keyword.")
+                                String::from(
+                                    "ParserError: expected ';' at statement end.",
+                                ),
+                                token.pos.clone()
                             ));
                         }
                     }
+
+                    Statement::Let(
+                        Expression::Identifier(name),
+                        value,
+                    )
                 }
 
-                _ => { 
+                // Assignment
+                Token::Identifier(name) => {
+                    let equals = self.consume()?;
+
+                    match equals.token {
+                        Token::Operand(Operand::EQUALS) => {}
+
+                        _ => {
+                            return Err(ParserError::SyntaxError(
+                                String::from(
+                                    "ParserError: expected '=' after identifier.",
+                                ),
+                                Position {
+                                    line: 0,
+                                    column: 0,
+                                }
+                            ));
+                        }
+                    }
+
+                    let value = self.parse_expr()?;
+
+                    match self.peek() {
+                        Some(TokenInfo {
+                            token: Token::Semicolon,
+                            ..
+                        }) => {
+                            self.consume()?;
+                        }
+
+                        _ => {
+                            return Err(ParserError::SyntaxError(
+                                String::from(
+                                    "ParserError: expected ';' at statement end.",
+                                ),
+                                token.pos.clone()
+                            ));
+                        }
+                    }
+
+                    Statement::Assign(
+                        Expression::Identifier(name),
+                        value,
+                    )
+                }
+                _ => {
                     return Err(ParserError::SyntaxError(
-                        String::from("ParserError: invalid syntax.")
-                    )); 
+                        String::from("ParserError: invalid syntax."),
+                        Position {
+                            line: 0,
+                            column: 0,
+                        }
+                    ));
                 }
-            }
+            };
 
-            if let Statement::Root(nodes) = &mut root_node {
-                nodes.push(
-                    statement
-                )
-            }
+            nodes.push(statement);
         }
-        Ok(root_node)
-    }
 
+        Ok(Statement::Root(nodes))
+    }
 }

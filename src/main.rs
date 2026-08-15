@@ -15,7 +15,7 @@ fn main() {
 
     let mut tokenizer: Tokenizer = Tokenizer::new(source);
 
-    let tokens: Vec<grammar::Token> = tokenizer.tokenize();
+    let tokens = tokenizer.tokenize();
 
     println!("\n\n{:?}", tokens);
 
@@ -25,7 +25,12 @@ fn main() {
 
     println!("\n\n{:?}", ast);
 
-    let mut interpreter: Interpreter = Interpreter::new(Result::unwrap(ast));
+    let ast_extracted = match ast {
+        Ok(ok) => ok,
+        Err(err) => return 
+    };
+
+    let mut interpreter: Interpreter = Interpreter::new(ast_extracted);
 
     println!("\n\n{:?}", interpreter.interpret());
     println!("\n\n{:?}", interpreter.variables);

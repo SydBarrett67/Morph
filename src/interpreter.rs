@@ -1,10 +1,10 @@
-use std::{collections::HashMap, fmt::Error};
-
 use crate::ast::{ Expression, Statement, Operator };
+
+use std::{collections::HashMap, fmt::{Error, format}};
 
 #[derive(Debug)]
 pub enum InterpreterError {
-    Error(String)
+    RuntimeError(String)
 }
 
 pub struct Interpreter {
@@ -23,10 +23,13 @@ impl Interpreter {
     pub fn eval_expr(&self, statement: &Expression) -> Result<i32, InterpreterError> {
         match statement {
 
+            // Simple number
             Expression::Number(value) => {
                 Ok(*value)
             }
 
+
+            // Recursive BinExpr
             Expression::BinaryExpression(op, lhv , rhv ) => {
                 match op {
                     Operator::Add => {
@@ -46,8 +49,8 @@ impl Interpreter {
                     }
 
                     _ => { Err(
-                        InterpreterError::Error(
-                            String::from("InterpreterError: Binary expression error.")
+                        InterpreterError::RuntimeError(
+                            String::from("InterpreterError: invalid binary operator.")
                         )
                     ) }
                 }
@@ -55,7 +58,7 @@ impl Interpreter {
 
 
             _ => { Err(
-                InterpreterError::Error(
+                InterpreterError::RuntimeError(
                     String::from("InterpreterError: Binary expression error.")
                 )
             ) }
@@ -79,8 +82,27 @@ impl Interpreter {
                             );
                         }
 
+                        Statement::Assign(
+                            Expression::Identifier(var_name),
+                            expr
+                        ) => {
+                            if self.variables.contains_key(var_name) {
+                                self.variables.insert(
+                                    String::from(var_name),
+                                    self.eval_expr(expr)?
+                                );
+                            }
+                            else {
+                                return Err(InterpreterError::RuntimeError(
+                                    String::from(format!(
+                                        "InterpreterError: {} was never declared.", var_name
+                                    ))
+                                ))
+                            }
+                        }
+
                         _ => { 
-                            return Err(InterpreterError::Error(
+                            return Err(InterpreterError::RuntimeError(
                                 String::from("InterpreterError: execution failed.")
                             ));
                         }
@@ -89,8 +111,8 @@ impl Interpreter {
 
                 Ok(())
             }
-            _ => { Err(InterpreterError::Error(
-                String::from("InterpreterError: AST root node error.")   
+            _ => { Err(InterpreterError::RuntimeError(
+                String::from("InterpreterError: AST root node RuntimeError.")   
             )) }
         }
     }

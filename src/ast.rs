@@ -8,6 +8,11 @@ pub enum Statement {
         Expression,
         Expression
     ),
+    // Variabile assignment
+    Assign(
+        Expression,
+        Expression
+    )
 }
 #[derive(Debug)]
 pub enum Expression {
