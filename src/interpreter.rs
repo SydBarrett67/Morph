@@ -1,5 +1,8 @@
 use crate::ast::{ Expression, Statement, Operator };
 
+use crate::scope::Scope;
+use crate::types::Type;
+
 use std::{collections::HashMap, fmt::{Error, format}};
 
 #[derive(Debug)]
@@ -9,23 +12,23 @@ pub enum InterpreterError {
 
 pub struct Interpreter {
     ast: Statement,
-    pub variables: HashMap<String, i32>,
+    pub env: Scope
 }
 
 impl Interpreter {
     pub fn new(ast: Statement) -> Self {
         Self {
             ast: ast,
-            variables: HashMap::new(),
+            env: Scope::new(None)
         }
     }
 
-    pub fn eval_expr(&self, statement: &Expression) -> Result<i32, InterpreterError> {
+    pub fn eval_expr(&self, statement: &Expression) -> Result<Type, InterpreterError> {
         match statement {
 
-            // Simple number
-            Expression::Number(value) => {
-                Ok(*value)
+            // Literal (any type)
+            Expression::Literal(value) => {
+                Ok(Type::String(*value))
             }
 
 
@@ -33,7 +36,7 @@ impl Interpreter {
             Expression::BinaryExpression(op, lhv , rhv ) => {
                 match op {
                     Operator::Add => {
-                        Ok(self.eval_expr(lhv)? + self.eval_expr(rhv)?)
+                        Ok(self.eval_expr(lhv)? + self.eval_expr(rhv))
                     }
 
                     Operator::Sub => {
@@ -74,9 +77,10 @@ impl Interpreter {
                     match statement {
                         Statement::Let(
                             Expression::Identifier(var_name),
+                            Expression::Identifier(declared_type),
                             expr
                         ) => {
-                            self.variables.insert(
+                            self.env.insert(
                                 String::from(var_name),
                                 self.eval_expr(&expr)?
                             );
@@ -86,8 +90,8 @@ impl Interpreter {
                             Expression::Identifier(var_name),
                             expr
                         ) => {
-                            if self.variables.contains_key(var_name) {
-                                self.variables.insert(
+                            if self.env.contains_key(var_name) {
+                                self.env.insert(
                                     String::from(var_name),
                                     self.eval_expr(expr)?
                                 );

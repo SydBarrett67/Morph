@@ -47,9 +47,11 @@ impl Tokenizer {
             "("     => Token::OpenParen,
             ")"     => Token::CloseParen,
             ";"     => Token::Semicolon,
-            // Number or Identifier
+            ":"     => Token::Colon,
+
+            // Literal or identifier
             _       => match word.parse::<i32>() {
-                Ok(number)  => Token::Number(number),
+                Ok(number)  => Token::Literal(number.to_string()),
                 Err(_)      => Token::Identifier(word.to_string()),
             }
         }

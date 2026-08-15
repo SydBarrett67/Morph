@@ -45,12 +45,12 @@ impl Parser {
     pub fn parse_factor(&mut self) -> Result<Expression, ParserError> {
         match self.peek() {
             Some(TokenInfo {
-                token: Token::Number(value),
+                token: Token::Literal(value),
                 ..
             }) => {
-                let value = *value;
+                let value = value.clone();
                 self.consume()?;
-                Ok(Expression::Number(value))
+                Ok(Expression::Literal(value))
             }
 
             Some(TokenInfo {
@@ -168,6 +168,7 @@ impl Parser {
                 // Variable declaration
                 Token::Keyword(Keyword::LET) => {
                     let identifier = self.consume()?;
+                    let declared_type = self.consume()?;
                     let equals = self.consume()?;
 
                     let name = match identifier.token {
@@ -182,6 +183,18 @@ impl Parser {
                                     column: 0,
                                 }
                             ));
+                        }
+                    };
+
+                    let declared_type = match declared_type.token {
+                        Token::Identifier(declared_type) => declared_type,
+                        _ => {
+                            return Err(ParserError::SyntaxError(
+                                String::from(
+                                    "ParserError: expected type after identifier"
+                                ),
+                                declared_type.pos
+                            ))
                         }
                     };
 
@@ -223,6 +236,7 @@ impl Parser {
 
                     Statement::Let(
                         Expression::Identifier(name),
+                        Expression::Identifier(declared_type),
                         value,
                     )
                 }

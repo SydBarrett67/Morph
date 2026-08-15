@@ -1,7 +1,12 @@
 mod grammar;
 mod tokenizer;
+
 mod parser;
 mod ast;
+
+mod scope;
+mod types;
+
 mod interpreter;
 
 use tokenizer::Tokenizer;
@@ -33,6 +38,6 @@ fn main() {
     let mut interpreter: Interpreter = Interpreter::new(ast_extracted);
 
     println!("\n\n{:?}", interpreter.interpret());
-    println!("\n\n{:?}", interpreter.variables);
+    println!("\n\n{:?}", interpreter.env);
 
 }

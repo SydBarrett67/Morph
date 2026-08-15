@@ -3,11 +3,16 @@ pub enum Statement {
     // Root Statement
     Root(Vec<Statement>),
 
+    // Scope
+    Scope(Vec<Statement>),
+
     // Variable declaration
     Let(
-        Expression,
-        Expression
+        Expression, // Variable name
+        Expression, // Declared type
+        Expression  // Variable value
     ),
+
     // Variabile assignment
     Assign(
         Expression,
@@ -19,8 +24,8 @@ pub enum Expression {
     // Identifier (variables etc.)
     Identifier(String),
 
-    // Simple int
-    Number(i32),
+    // Literal (any)
+    Literal(String),
 
     // Binary expression
     BinaryExpression(

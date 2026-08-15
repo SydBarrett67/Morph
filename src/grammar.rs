@@ -13,21 +13,28 @@ pub struct Position {
 
 #[derive(Debug, Clone)]
 pub enum Token {
+    // Variable names, 
     Identifier(String),
-    Number(i32),
+    Literal(String),
     Keyword(Keyword),
     Operand(Operand),
 
     // Single character tokens
-    Semicolon,
-    OpenParen,
-    CloseParen,
+    Semicolon, Colon,
+    // ()
+    OpenParen, CloseParen,
+    // {}
+    OpenBrace, CloseBrace
 }
 
 #[derive(Debug)]
 #[derive(Clone)]
 pub enum Keyword {
     LET,
+    // Conditional
+    IF, ELSE,
+    // Loops
+    WHILE,
 }
 
 #[derive(Debug)]
