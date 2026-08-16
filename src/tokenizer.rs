@@ -46,6 +46,8 @@ impl Tokenizer {
             // Structure
             "("     => Token::OpenParen,
             ")"     => Token::CloseParen,
+            "{"     => Token::OpenBrace,
+            "}"     => Token::CloseBrace,
             ";"     => Token::Semicolon,
             ":"     => Token::Colon,
 
@@ -108,7 +110,7 @@ impl Tokenizer {
                 }
 
                 // Single-character tokens
-                '+' | '-' | '/' | '*' | '=' | ';' | '(' | ')' => {
+                '+' | '-' | '/' | '*' | '=' | ';' | '(' | ')' | '{' | '}' => {
                     chars_to_consume = 1;
                 }
 

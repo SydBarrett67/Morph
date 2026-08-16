@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     // Root Statement
     Root(Vec<Statement>),
@@ -19,7 +19,7 @@ pub enum Statement {
         Expression
     )
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     // Identifier (variables etc.)
     Identifier(String),
@@ -35,7 +35,7 @@ pub enum Expression {
     ),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Operator {
     Add,
     Sub,

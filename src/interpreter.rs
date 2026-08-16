@@ -1,7 +1,7 @@
 use crate::ast::{ Expression, Statement, Operator };
 
 use crate::scope::Scope;
-use crate::types::Type;
+use crate::typechecker::Type;
 
 use std::{collections::HashMap, fmt::{Error, format}};
 
@@ -12,14 +12,16 @@ pub enum InterpreterError {
 
 pub struct Interpreter {
     ast: Statement,
-    pub env: Scope
+    pub env: Vec<Scope>,
+    depth: usize
 }
 
 impl Interpreter {
-    pub fn new(ast: Statement) -> Self {
+    pub fn new(ast: Statement, env: Vec<Scope>) -> Self {
         Self {
             ast: ast,
-            env: Scope::new(None)
+            env: env,
+            depth: 0
         }
     }
 
@@ -28,15 +30,17 @@ impl Interpreter {
 
             // Literal (any type)
             Expression::Literal(value) => {
-                Ok(Type::String(*value))
+                Ok(*value)
             }
-
 
             // Recursive BinExpr
             Expression::BinaryExpression(op, lhv , rhv ) => {
                 match op {
                     Operator::Add => {
-                        Ok(self.eval_expr(lhv)? + self.eval_expr(rhv))
+                        let lhs = self.eval_expr(lhv)?;
+                        let rhs = self.eval_expr(rhv)?;
+
+                        Ok(lhs + rhs)
                     }
 
                     Operator::Sub => {
@@ -80,7 +84,7 @@ impl Interpreter {
                             Expression::Identifier(declared_type),
                             expr
                         ) => {
-                            self.env.insert(
+                            self.env.get_mut(self.depth).insert(
                                 String::from(var_name),
                                 self.eval_expr(&expr)?
                             );

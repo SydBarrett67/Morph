@@ -1,5 +1,9 @@
+use crate::scope::Scope;
+
 use crate::ast::{Expression, Operator, Statement};
 use crate::grammar::{Keyword, Operand, Position, Token, TokenInfo};
+use crate::namesolver::NameSolver;
+use crate::typechecker::TypeChecker;
 
 #[derive(Debug)]
 pub enum ParserError {
@@ -11,6 +15,7 @@ pub enum ParserError {
 
 pub struct Parser {
     tokens: Vec<TokenInfo>,
+    scopes: Vec<Box<Scope>>,
     position: usize,
 }
 
@@ -18,6 +23,7 @@ impl Parser {
     pub fn new(tokens: Vec<TokenInfo>) -> Self {
         Self {
             tokens,
+            scopes: Vec::new(),
             position: 0,
         }
     }
@@ -48,7 +54,7 @@ impl Parser {
                 token: Token::Literal(value),
                 ..
             }) => {
-                let value = value.clone();
+                let value = value.to_owned();
                 self.consume()?;
                 Ok(Expression::Literal(value))
             }
@@ -158,148 +164,176 @@ impl Parser {
         Ok(lhs)
     }
 
+    pub fn parse_stmt(&mut self) -> Result<Statement, ParserError> {
+        let token = self.consume()?;
+
+        let statement = match token.token {
+            // Variable declaration
+            Token::Keyword(Keyword::LET) => {
+                let identifier = self.consume()?;
+                let declared_type = self.consume()?;
+                let equals = self.consume()?;
+
+                let name = match identifier.token {
+                    Token::Identifier(name) => name,
+                    _ => {
+                        return Err(ParserError::SyntaxError(
+                            String::from(
+                                "ParserError: expected identifier after 'let'.",
+                            ),
+                            Position {
+                                line: 0,
+                                column: 0,
+                            }
+                        ));
+                    }
+                };
+
+                let declared_type = match declared_type.token {
+                    Token::Identifier(declared_type) => declared_type,
+                    _ => {
+                        return Err(ParserError::SyntaxError(
+                            String::from(
+                                "ParserError: expected type after identifier"
+                            ),
+                            declared_type.pos
+                        ))
+                    }
+                };
+
+                match equals.token {
+                    Token::Operand(Operand::EQUALS) => {}
+
+                    _ => {
+                        return Err(ParserError::SyntaxError(
+                            String::from(
+                                "ParserError: expected '=' after identifier.",
+                            ),
+                            Position {
+                                line: 0,
+                                column: 0,
+                            }
+                        ));
+                    }
+                }
+
+                let value = self.parse_expr()?;
+
+                match self.peek() {
+                    Some(TokenInfo {
+                        token: Token::Semicolon,
+                        ..
+                    }) => {
+                        self.consume()?;
+                    }
+
+                    _ => {
+                        return Err(ParserError::SyntaxError(
+                            String::from(
+                                "ParserError: expected ';' at statement end.",
+                            ),
+                            token.pos.clone()
+                        ));
+                    }
+                }
+
+                Statement::Let(
+                    Expression::Identifier(name),
+                    Expression::Identifier(declared_type),
+                    value,
+                )
+            }
+
+            // Assignment
+            Token::Identifier(name) => {
+                let equals = self.consume()?;
+
+                match equals.token {
+                    Token::Operand(Operand::EQUALS) => {}
+
+                    _ => {
+                        return Err(ParserError::SyntaxError(
+                            String::from(
+                                "ParserError: expected '=' after identifier.",
+                            ),
+                            Position {
+                                line: 0,
+                                column: 0,
+                            }
+                        ));
+                    }
+                }
+
+                let value = self.parse_expr()?;
+
+                match self.peek() {
+                    Some(TokenInfo {
+                        token: Token::Semicolon,
+                        ..
+                    }) => {
+                        self.consume()?;
+                    }
+
+                    _ => {
+                        return Err(ParserError::SyntaxError(
+                            String::from(
+                                "ParserError: expected ';' at statement end.",
+                            ),
+                            token.pos.clone()
+                        ));
+                    }
+                }
+
+                Statement::Assign(
+                    Expression::Identifier(name),
+                    value,
+                )
+            }
+            
+            // Scope
+            Token::OpenBrace => {
+                let mut statements = Vec::new();
+                while !matches!(
+                    self.peek(),
+                    Some(TokenInfo {
+                        token: Token::CloseBrace,
+                        ..
+                    })
+                ) {
+                    statements.push(
+                        self.parse_stmt()?
+                    )
+                }
+                self.consume()?;
+                Statement::Scope(statements)
+            }
+
+            _ => {
+                return Err(ParserError::SyntaxError(
+                    String::from("ParserError: invalid statement."),
+                    Position {
+                        line: 0,
+                        column: 0,
+                    }
+                ));
+            }
+        };
+
+        Ok(statement)
+    }
+
     pub fn parse(&mut self) -> Result<Statement, ParserError> {
         let mut nodes = Vec::new();
 
+
         while self.position < self.tokens.len() {
-            let token = self.consume()?;
-
-            let statement = match token.token {
-                // Variable declaration
-                Token::Keyword(Keyword::LET) => {
-                    let identifier = self.consume()?;
-                    let declared_type = self.consume()?;
-                    let equals = self.consume()?;
-
-                    let name = match identifier.token {
-                        Token::Identifier(name) => name,
-                        _ => {
-                            return Err(ParserError::SyntaxError(
-                                String::from(
-                                    "ParserError: expected identifier after 'let'.",
-                                ),
-                                Position {
-                                    line: 0,
-                                    column: 0,
-                                }
-                            ));
-                        }
-                    };
-
-                    let declared_type = match declared_type.token {
-                        Token::Identifier(declared_type) => declared_type,
-                        _ => {
-                            return Err(ParserError::SyntaxError(
-                                String::from(
-                                    "ParserError: expected type after identifier"
-                                ),
-                                declared_type.pos
-                            ))
-                        }
-                    };
-
-                    match equals.token {
-                        Token::Operand(Operand::EQUALS) => {}
-
-                        _ => {
-                            return Err(ParserError::SyntaxError(
-                                String::from(
-                                    "ParserError: expected '=' after identifier.",
-                                ),
-                                Position {
-                                    line: 0,
-                                    column: 0,
-                                }
-                            ));
-                        }
-                    }
-
-                    let value = self.parse_expr()?;
-
-                    match self.peek() {
-                        Some(TokenInfo {
-                            token: Token::Semicolon,
-                            ..
-                        }) => {
-                            self.consume()?;
-                        }
-
-                        _ => {
-                            return Err(ParserError::SyntaxError(
-                                String::from(
-                                    "ParserError: expected ';' at statement end.",
-                                ),
-                                token.pos.clone()
-                            ));
-                        }
-                    }
-
-                    Statement::Let(
-                        Expression::Identifier(name),
-                        Expression::Identifier(declared_type),
-                        value,
-                    )
-                }
-
-                // Assignment
-                Token::Identifier(name) => {
-                    let equals = self.consume()?;
-
-                    match equals.token {
-                        Token::Operand(Operand::EQUALS) => {}
-
-                        _ => {
-                            return Err(ParserError::SyntaxError(
-                                String::from(
-                                    "ParserError: expected '=' after identifier.",
-                                ),
-                                Position {
-                                    line: 0,
-                                    column: 0,
-                                }
-                            ));
-                        }
-                    }
-
-                    let value = self.parse_expr()?;
-
-                    match self.peek() {
-                        Some(TokenInfo {
-                            token: Token::Semicolon,
-                            ..
-                        }) => {
-                            self.consume()?;
-                        }
-
-                        _ => {
-                            return Err(ParserError::SyntaxError(
-                                String::from(
-                                    "ParserError: expected ';' at statement end.",
-                                ),
-                                token.pos.clone()
-                            ));
-                        }
-                    }
-
-                    Statement::Assign(
-                        Expression::Identifier(name),
-                        value,
-                    )
-                }
-                _ => {
-                    return Err(ParserError::SyntaxError(
-                        String::from("ParserError: invalid syntax."),
-                        Position {
-                            line: 0,
-                            column: 0,
-                        }
-                    ));
-                }
-            };
+            
+            let statement = self.parse_stmt()?;
 
             nodes.push(statement);
         }
 
         Ok(Statement::Root(nodes))
     }
+
 }
