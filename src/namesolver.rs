@@ -1,5 +1,4 @@
-
-use crate::scope::Scope;
+use crate::scope::ASTScope;
 use crate::ast::{ Expression, Operator, Statement };
 use crate::symbol::{ Symbol, SymbolId };
 use crate::typechecker::Type;
@@ -9,7 +8,7 @@ pub struct NameError{ msg: String }
 
 pub struct NameSolver {
     ast: Statement,
-    glob_scope: Vec<Scope>,
+    glob_scope: Vec<ASTScope>,
     curr_scope: usize
 }
 
@@ -18,7 +17,7 @@ impl NameSolver {
         Self {
             ast: ast,
             glob_scope: vec![
-                Scope::new(None)
+                ASTScope::new(None)
             ],
             curr_scope: 0,
         }
@@ -27,13 +26,13 @@ impl NameSolver {
     pub fn solve_statement(&mut self, statement: Statement) -> Result<(), NameError> {
         match statement {
 
-            // Variable declaration => new entry in scope hashmap
+            // Variable declaration => new entry in ASTScope hashmap
             Statement::Let(
                 Expression::Identifier(name),
                 Expression::Identifier(ty),
                 ..
             ) => {
-                let inferred_type = match ty.as_str() {
+                let declared_type = match ty.as_str() {
 
                     "int" => Ok(Type::INT),
                     "string" => Ok(Type::STRING),
@@ -54,24 +53,24 @@ impl NameSolver {
                         name.clone(),
                         Symbol::Variable {
                             name,
-                            ty: inferred_type?,
+                            ty: declared_type?,
                         },
                     );
 
                 Ok(())
             }
 
-            // New scope
+            // New ASTScope
             Statement::Scope(
                 stmts
             ) => {
                 self.glob_scope.push(
-                    Scope::new(Some(self.curr_scope))
+                    ASTScope::new(Some(self.curr_scope))
                 );
                 self.curr_scope += 1;
 
 
-                // Solve every statement inside new scope
+                // Solve every statement inside new ASTScope
                 for stmt in stmts {
                     self.solve_statement(stmt)?
                 }
@@ -85,7 +84,7 @@ impl NameSolver {
         }
     }
 
-    pub fn build_scopes(&mut self) -> Result<Vec<Scope>, NameError> {
+    pub fn build_scopes(&mut self) -> Result<Vec<ASTScope>, NameError> {
 
         let nodes = match &self.ast {
             Statement::Root(nodes) => nodes.clone(),

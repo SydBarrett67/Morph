@@ -1,4 +1,4 @@
-use crate::scope::Scope;
+use crate::scope::ASTScope;
 
 use crate::ast::{Expression, Operator, Statement};
 use crate::grammar::{Keyword, Operand, Position, Token, TokenInfo};
@@ -15,7 +15,7 @@ pub enum ParserError {
 
 pub struct Parser {
     tokens: Vec<TokenInfo>,
-    scopes: Vec<Box<Scope>>,
+    scopes: Vec<Box<ASTScope>>,
     position: usize,
 }
 

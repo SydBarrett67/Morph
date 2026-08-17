@@ -1,4 +1,4 @@
-use crate::typechecker::Type;
+use crate::typechecker::{Type, Value};
 
 pub struct SymbolId(pub usize);
 
@@ -6,6 +6,6 @@ pub struct SymbolId(pub usize);
 pub enum Symbol {
     Variable {
         name: String,
-        ty: Type
+        ty: Type,
     }
 }

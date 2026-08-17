@@ -1,2 +1,2 @@
-let x: int = 2;
+let x: int = 4 + 5;
 let y: int = x;

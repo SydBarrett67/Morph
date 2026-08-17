@@ -1,14 +1,13 @@
-use crate::symbol::{ Symbol, SymbolId };
+use crate::{symbol::{ Symbol, SymbolId }, typechecker::Value};
 
 use std::{collections::HashMap};
 
 #[derive(Debug, Clone)]
-pub struct Scope {
+pub struct ASTScope {
     pub symbols: HashMap<String, Symbol>,
     pub parent: Option<usize>
 }
-
-impl Scope {
+impl ASTScope {
     pub fn new(parent: Option<usize>) -> Self {
         Self {
             symbols: HashMap::new(),
