@@ -1,29 +1,32 @@
 use crate::ast::{ Expression, Statement, Operator };
-
-use crate::scope::{ ASTScope };
-use crate::typechecker::{Type, TypeChecker, Value};
-
 use std::{collections::HashMap, fmt::{Error, format}};
+
+use crate::scope::RuntimeScope;
 
 #[derive(Debug)]
 pub enum InterpreterError {
     RuntimeError(String)
 }
 
+#[derive(Debug, Clone)]
+pub enum Value {
+    Int(i32),
+    Bool(bool),
+    String(String)
+}
+
 pub struct Interpreter {
     ast: Statement,
-    symbols: Vec<ASTScope>,
-    pub values: Vec<HashMap<String, Value>>,
+    env: RuntimeScope,
     depth: usize
 }
 
 impl Interpreter {
     // Constructor
-    pub fn new(ast: Statement, symbols: Vec<ASTScope>) -> Self {
+    pub fn new(ast: Statement, env: RuntimeScope) -> Self {
         Self {
             ast: ast,
-            symbols: symbols,
-            values: vec![HashMap::new()],
+            env: env,
             depth: 0
         }
     }
@@ -117,7 +120,7 @@ impl Interpreter {
     pub fn interpret(&mut self) -> Result<(), InterpreterError>{
         match &self.ast {
             // Enter root AST node
-            Statement::Root(statements) => {
+            Statement::Scope(statements) => {
 
                 // Cicle through every statement
                 for statement in statements {

@@ -1,9 +1,5 @@
-use crate::scope::ASTScope;
-
-use crate::ast::{Expression, Operator, Statement};
+use crate::ast::{Expression, Operator, Statement, Type };
 use crate::grammar::{Keyword, Operand, Position, Token, TokenInfo};
-use crate::namesolver::NameSolver;
-use crate::typechecker::TypeChecker;
 
 #[derive(Debug)]
 pub enum ParserError {
@@ -15,7 +11,6 @@ pub enum ParserError {
 
 pub struct Parser {
     tokens: Vec<TokenInfo>,
-    scopes: Vec<Box<ASTScope>>,
     position: usize,
 }
 
@@ -23,7 +18,6 @@ impl Parser {
     pub fn new(tokens: Vec<TokenInfo>) -> Self {
         Self {
             tokens,
-            scopes: Vec::new(),
             position: 0,
         }
     }
@@ -50,6 +44,7 @@ impl Parser {
 
     pub fn parse_factor(&mut self) -> Result<Expression, ParserError> {
         match self.peek() {
+            // Literal
             Some(TokenInfo {
                 token: Token::Literal(value),
                 ..
@@ -59,6 +54,7 @@ impl Parser {
                 Ok(Expression::Literal(value))
             }
 
+            // ()
             Some(TokenInfo {
                 token: Token::OpenParen,
                 ..
@@ -90,6 +86,7 @@ impl Parser {
                 }
             }
 
+            // Var name
             Some(TokenInfo {
                 token: Token::Identifier(name),
                 ..
@@ -189,8 +186,19 @@ impl Parser {
                     }
                 };
 
+                // Type 
                 let declared_type = match declared_type.token {
-                    Token::Identifier(declared_type) => declared_type,
+                    Token::Identifier(declared_type_str) => {
+                        match declared_type_str.as_str() {
+
+                            "int" => Type::INT,
+                            "string" => Type::STRING,
+                            "bool" => Type::BOOL,
+
+                            _ => todo!()
+                        }
+                    },
+
                     _ => {
                         return Err(ParserError::SyntaxError(
                             String::from(
@@ -201,6 +209,7 @@ impl Parser {
                     }
                 };
 
+                // Equals
                 match equals.token {
                     Token::Operand(Operand::EQUALS) => {}
 
@@ -239,7 +248,7 @@ impl Parser {
 
                 Statement::Let(
                     Expression::Identifier(name),
-                    Expression::Identifier(declared_type),
+                    declared_type,
                     value,
                 )
             }
@@ -333,7 +342,7 @@ impl Parser {
             nodes.push(statement);
         }
 
-        Ok(Statement::Root(nodes))
+        Ok(Statement::Scope(nodes))
     }
 
 }

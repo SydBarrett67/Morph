@@ -9,17 +9,19 @@ mod ast;
 // Interpreter
 mod interpreter;
 mod scope;
-mod symbol;
-mod typechecker;
-mod namesolver;
+// mod scope;
+// mod symbol;
+// mod typechecker;
+// mod namesolver;
 
 // Exported structs
 use tokenizer::Tokenizer;
 use parser::Parser;
 use interpreter::Interpreter;
-use typechecker::{ Type, TypeChecker };
+/*
 use namesolver::NameSolver;
-
+use typechecker::TypeChecker;
+*/
 
 use std::fs;
 fn main() {
@@ -31,7 +33,7 @@ fn main() {
 
     let tokens = tokenizer.tokenize();
 
-    println!("\n\nTokens:\n\n{:?}", tokens);
+    // println!("\n\nTokens:\n\n{:?}", tokens);
 
     let mut parser = Parser::new(tokens);
 
@@ -45,6 +47,7 @@ fn main() {
 
     println!("\n\nCrude AST:\n\n{:?}", ast);
 
+    /*
     let mut namesolver = NameSolver::new(ast.clone());
 
     let scopes = match namesolver.build_scopes() {
@@ -64,4 +67,5 @@ fn main() {
 
     println!("\n\n{:?}", interpreter.interpret());
     println!("\n\n{:?}", interpreter.values);
+     */
 }

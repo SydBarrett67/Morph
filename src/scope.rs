@@ -1,26 +1,13 @@
-use crate::{symbol::{ Symbol, SymbolId }, typechecker::Value};
+use crate::interpreter::Value;
 
-use std::{collections::HashMap};
-
-#[derive(Debug, Clone)]
-pub struct ASTScope {
-    pub symbols: HashMap<String, Symbol>,
-    pub parent: Option<usize>
+pub struct RuntimeScope {
+    symbols: 
 }
-impl ASTScope {
-    pub fn new(parent: Option<usize>) -> Self {
-        Self {
-            symbols: HashMap::new(),
-            parent: parent,
-        }
-    }
 
-    pub fn resolve(&self, name: &str) -> Option<&Symbol> {
-        if self.symbols.contains_key(name) {
-            Some(self.symbols.get(name)?)
-        }
-        else {
-            None
+impl RuntimeScope {
+    pub fn new() -> Self {
+        Self {
+
         }
     }
 }
