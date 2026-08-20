@@ -2,7 +2,7 @@ use std::string;
 
 #[derive(Debug, Clone)]
 pub struct Symbol {
-
+    pub ty: Type,
 }
 
 

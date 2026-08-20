@@ -16,11 +16,9 @@ mod semanticanalyzer;
 // Exported structs
 use tokenizer::Tokenizer;
 use parser::Parser;
+use semanticanalyzer::SemanticAnalyzer;
 //use interpreter::Interpreter;
-/*
-use namesolver::NameSolver;
-use typechecker::TypeChecker;
-*/
+
 
 use std::fs;
 fn main() {
@@ -46,8 +44,11 @@ fn main() {
 
     println!("\n\nCrude AST:\n\n{:?}", ast);
 
+    let mut semanticanalyzer = SemanticAnalyzer::new(ast);
 
-    println!("\n\nTyped AST:\n\n{:?}", ast);
+    let typed_ast = semanticanalyzer.analyze();
+
+    println!("\n\nTyped AST:\n\n{:?}", typed_ast);
 
     /*
 

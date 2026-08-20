@@ -1,52 +1,109 @@
 use std::collections::HashMap;
-
-use crate::ast::{ Statement, Symbol };
+use crate::ast::{Statement, Expression, Type, Symbol, Literal};
 
 #[derive(Debug, Clone)]
-pub struct NameError{ msg: String }
-
-pub struct NameSolver {
-    ast: Statement,
-    symbol_table: HashMap<String, Symbol>
+pub struct NameError {
+    pub msg: String,
 }
 
-impl NameSolver {
+pub struct SemanticAnalyzer {
+    ast: Statement,
+    scopes: Vec<HashMap<String, Symbol>>,
+}
+
+impl SemanticAnalyzer {
     pub fn new(ast: Statement) -> Self {
         Self {
-            ast: ast,
-            symbol_table: HashMap::new(),
+            ast,
+            scopes: vec![HashMap::new()],
         }
     }
 
-    // Traverse crude AST and returns typed AST
-    pub fn analyze(&mut self) -> Result<Statement, NameError> {
-        match &self.ast {
+    pub fn analyze(mut self) -> Result<Statement, NameError> {
+        let ast = std::mem::replace(&mut self.ast, Statement::Scope(vec![]));
+        self.analyze_statement(ast)
+    }
 
-            // Enter scope
+    fn enter_scope(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    fn exit_scope(&mut self) {
+        self.scopes.pop();
+    }
+
+    fn declare_variable(&mut self, name: String, symbol: Symbol) {
+        if let Some(current_scope) = self.scopes.last_mut() {
+            current_scope.insert(name, symbol);
+        }
+    }
+
+    fn lookup(&self, name: &str) -> Option<&Symbol> {
+        for scope in self.scopes.iter().rev() {
+            if let Some(symbol) = scope.get(name) {
+                return Some(symbol);
+            }
+        }
+        None
+    }
+
+    fn analyze_statement(&mut self, stmt: Statement) -> Result<Statement, NameError> {
+        match stmt {
             Statement::Scope(stmts) => {
-
-                for statement in stmts {
-
-                    match statement {
-
-                        // Let
-                        Statement::Let(
-                            name,
-                            ty,
-                            ..
-                        ) => {
-                            
-                        }
-
-                        _ => todo!()
-                    }
-
+                self.enter_scope();
+                let mut annotated_stmts = Vec::new();
+                for s in stmts {
+                    annotated_stmts.push(self.analyze_statement(s)?);
                 }
-
-                todo!()
+                self.exit_scope();
+                Ok(Statement::Scope(annotated_stmts))
             }
 
-            _ => todo!()
+            Statement::Let(name, declared_ty, expr) => {
+                let annotated_expr = self.analyze_expression(expr)?;
+
+                let symbol = Symbol { ty: declared_ty.clone() };
+                self.declare_variable(name.clone(), symbol.clone());
+
+                Ok(Statement::Let(name, declared_ty, annotated_expr))
+            }
+
+            Statement::Assign(target, expr) => {
+                let annotated_expr = self.analyze_expression(expr)?;
+                Ok(Statement::Assign(target, annotated_expr))
+            }
+        }
+    }
+
+    fn analyze_expression(&mut self, expr: Expression) -> Result<Expression, NameError> {
+        match expr {
+            Expression::Identifier { name, .. } => {
+                if let Some(symbol) = self.lookup(&name) {
+                    Ok(Expression::Identifier {
+                        name,
+                        symbol: Some(symbol.clone()),
+                        ty: Some(symbol.ty.clone()),
+                    })
+                } else {
+                    Err(NameError {
+                        msg: format!("Variabile non trovata: {}", name),
+                    })
+                }
+            }
+
+            Expression::Literal(lit) => Ok(Expression::Literal(lit)),
+
+            Expression::BinaryExpression(op, left, right, _) => {
+                let annotated_left = self.analyze_expression(*left)?;
+                let annotated_right = self.analyze_expression(*right)?;
+
+                Ok(Expression::BinaryExpression(
+                    op,
+                    Box::new(annotated_left),
+                    Box::new(annotated_right),
+                    Some(Type::INT),
+                ))
+            }
         }
     }
 }
