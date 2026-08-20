@@ -1,5 +1,4 @@
 use crate::ast::{ Expression, Statement, Operator };
-use std::{collections::HashMap, fmt::{Error, format}};
 
 use crate::scope::RuntimeScope;
 

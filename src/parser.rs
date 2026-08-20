@@ -1,3 +1,4 @@
+use crate::ast::Literal::{self, Int};
 use crate::ast::{Expression, Operator, Statement, Type };
 use crate::grammar::{Keyword, Operand, Position, Token, TokenInfo};
 
@@ -44,14 +45,29 @@ impl Parser {
 
     pub fn parse_factor(&mut self) -> Result<Expression, ParserError> {
         match self.peek() {
-            // Literal
             Some(TokenInfo {
                 token: Token::Literal(value),
                 ..
             }) => {
                 let value = value.to_owned();
                 self.consume()?;
-                Ok(Expression::Literal(value))
+
+                // Boolean
+                let literal = if value == "true" {
+                    Literal::Bool(true)
+                } else if value == "false" {
+                    Literal::Bool(false)
+                } 
+                // Int
+                else if let Ok(num) = value.parse::<i32>() {
+                    Literal::Int(num)
+                } 
+                // String
+                else {
+                    Literal::String(value)
+                };
+
+                Ok(Expression::Literal(literal))
             }
 
             // ()
@@ -93,7 +109,7 @@ impl Parser {
             }) => {
                 let name = name.clone();
                 self.consume()?;
-                Ok(Expression::Identifier(name))
+                Ok(Expression::Identifier { name: name, ty: None, symbol: None })
             }
 
             Some(token) => Err(ParserError::SyntaxError(
@@ -131,6 +147,7 @@ impl Parser {
                 operator,
                 Box::new(lhs),
                 Box::new(rhs),
+                None
             );
         }
 
@@ -155,6 +172,7 @@ impl Parser {
                 operator,
                 Box::new(lhs),
                 Box::new(rhs),
+                None
             );
         }
 
@@ -247,7 +265,7 @@ impl Parser {
                 }
 
                 Statement::Let(
-                    Expression::Identifier(name),
+                    name,
                     declared_type,
                     value,
                 )
@@ -294,7 +312,7 @@ impl Parser {
                 }
 
                 Statement::Assign(
-                    Expression::Identifier(name),
+                    name,
                     value,
                 )
             }

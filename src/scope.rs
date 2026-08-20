@@ -1,7 +1,7 @@
 use crate::interpreter::Value;
 
 pub struct RuntimeScope {
-    symbols: 
+    
 }
 
 impl RuntimeScope {

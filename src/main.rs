@@ -7,17 +7,16 @@ mod parser;
 mod ast;
 
 // Interpreter
-mod interpreter;
-mod scope;
+// mod interpreter;
+// mod scope;
 // mod scope;
 // mod symbol;
-// mod typechecker;
-// mod namesolver;
+mod semanticanalyzer;
 
 // Exported structs
 use tokenizer::Tokenizer;
 use parser::Parser;
-use interpreter::Interpreter;
+//use interpreter::Interpreter;
 /*
 use namesolver::NameSolver;
 use typechecker::TypeChecker;
@@ -47,18 +46,10 @@ fn main() {
 
     println!("\n\nCrude AST:\n\n{:?}", ast);
 
+
+    println!("\n\nTyped AST:\n\n{:?}", ast);
+
     /*
-    let mut namesolver = NameSolver::new(ast.clone());
-
-    let scopes = match namesolver.build_scopes() {
-        Ok(scopes) => scopes,
-        Err(err) => {
-            println!("NameSolver error: {:?}", err);
-            return;
-        }
-    };
-
-    println!("\n\nScopes:\n\n{:?}", scopes);
 
     let mut interpreter = Interpreter::new(
         ast,

@@ -1,19 +1,26 @@
+use std::string;
+
+#[derive(Debug, Clone)]
+pub struct Symbol {
+
+}
+
+
 #[derive(Debug, Clone)]
 pub enum Statement {
-
     // Scope
     Scope(Vec<Statement>),
 
     // Variable declaration
     Let(
-        Expression, // Variable name
+        String,     // Variable name
         Type,       // Declared type
         Expression  // Variable value
     ),
 
     // Variabile assignment
     Assign(
-        Expression,
+        String,
         Expression
     )
 }
@@ -28,20 +35,31 @@ pub enum Type {
 #[derive(Debug, Clone)]
 pub enum Expression {
     // Identifier (variables etc.)
-    Identifier(String),
+    Identifier {
+        name: String,
+        symbol: Option<Symbol>,
+        ty: Option<Type>,
+    },
 
     // Literal (any)
-    Literal(
-        String
-    ),
+    Literal(Literal),
 
     // Binary expression
     BinaryExpression(
         Operator,
         Box<Expression>,
         Box<Expression>,
+        Option<Type>
     ),
 }
+
+#[derive(Debug, Clone)]
+pub enum Literal {
+    Int(i32),
+    Bool(bool),
+    String(String)
+}
+
 
 #[derive(Debug, Clone)]
 pub enum Operator {
