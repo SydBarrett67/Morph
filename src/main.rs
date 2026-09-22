@@ -7,17 +7,15 @@ mod parser;
 mod ast;
 
 // Interpreter
-// mod interpreter;
-// mod scope;
-// mod scope;
-// mod symbol;
+mod interpreter;
+mod scope;
 mod semanticanalyzer;
 
 // Exported structs
 use tokenizer::Tokenizer;
 use parser::Parser;
 use semanticanalyzer::SemanticAnalyzer;
-//use interpreter::Interpreter;
+use interpreter::Interpreter;
 
 
 use std::fs;
@@ -32,8 +30,8 @@ fn main() {
 
     // println!("\n\nTokens:\n\n{:?}", tokens);
 
+    // Create AST
     let mut parser = Parser::new(tokens);
-
     let ast = match parser.parse() {
         Ok(ast) => ast,
         Err(err) => {
@@ -42,22 +40,14 @@ fn main() {
         }
     };
 
-    println!("\n\nCrude AST:\n\n{:?}", ast);
-
-    let mut semanticanalyzer = SemanticAnalyzer::new(ast);
-
+    // Add types
+    let semanticanalyzer = SemanticAnalyzer::new(ast.clone());
     let typed_ast = semanticanalyzer.analyze();
 
-    println!("\n\nTyped AST:\n\n{:?}", typed_ast);
+    println!("\n\nAST:\n\n{:?}", typed_ast);
 
-    /*
-
-    let mut interpreter = Interpreter::new(
-        ast,
-        scopes
-    );
+    let mut interpreter = Interpreter::new(ast);
 
     println!("\n\n{:?}", interpreter.interpret());
-    println!("\n\n{:?}", interpreter.values);
-     */
+    //println!("\n\n{:?}", interpreter.env);
 }

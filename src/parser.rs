@@ -1,4 +1,4 @@
-use crate::ast::Literal::{self, Int};
+use crate::ast::Literal::{ self };
 use crate::ast::{Expression, Operator, Statement, Type };
 use crate::grammar::{Keyword, Operand, Position, Token, TokenInfo};
 
@@ -109,7 +109,7 @@ impl Parser {
             }) => {
                 let name = name.clone();
                 self.consume()?;
-                Ok(Expression::Identifier { name: name, ty: None, symbol: None })
+                Ok(Expression::Identifier { name: name, ty: None })
             }
 
             Some(token) => Err(ParserError::SyntaxError(

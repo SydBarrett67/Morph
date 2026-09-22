@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::ast::{Statement, Expression, Type, Symbol, Literal};
+use crate::ast::{Statement, Expression, Type};
 
 #[derive(Debug, Clone)]
 pub struct NameError {
@@ -8,7 +8,7 @@ pub struct NameError {
 
 pub struct SemanticAnalyzer {
     ast: Statement,
-    scopes: Vec<HashMap<String, Symbol>>,
+    scopes: Vec<HashMap<String, Type>>,
 }
 
 impl SemanticAnalyzer {
@@ -32,16 +32,16 @@ impl SemanticAnalyzer {
         self.scopes.pop();
     }
 
-    fn declare_variable(&mut self, name: String, symbol: Symbol) {
+    fn declare_variable(&mut self, name: String, ty: Type) {
         if let Some(current_scope) = self.scopes.last_mut() {
-            current_scope.insert(name, symbol);
+            current_scope.insert(name, ty);
         }
     }
 
-    fn lookup(&self, name: &str) -> Option<&Symbol> {
+    fn lookup(&self, name: &str) -> Option<&Type> {
         for scope in self.scopes.iter().rev() {
-            if let Some(symbol) = scope.get(name) {
-                return Some(symbol);
+            if let Some(ty) = scope.get(name) {
+                return Some(ty);
             }
         }
         None
@@ -62,8 +62,8 @@ impl SemanticAnalyzer {
             Statement::Let(name, declared_ty, expr) => {
                 let annotated_expr = self.analyze_expression(expr)?;
 
-                let symbol = Symbol { ty: declared_ty.clone() };
-                self.declare_variable(name.clone(), symbol.clone());
+                let ty = declared_ty.clone();
+                self.declare_variable(name.clone(), ty.clone());
 
                 Ok(Statement::Let(name, declared_ty, annotated_expr))
             }
@@ -78,11 +78,10 @@ impl SemanticAnalyzer {
     fn analyze_expression(&mut self, expr: Expression) -> Result<Expression, NameError> {
         match expr {
             Expression::Identifier { name, .. } => {
-                if let Some(symbol) = self.lookup(&name) {
+                if let Some(ty) = self.lookup(&name) {
                     Ok(Expression::Identifier {
                         name,
-                        symbol: Some(symbol.clone()),
-                        ty: Some(symbol.ty.clone()),
+                        ty: Some(ty.clone()),
                     })
                 } else {
                     Err(NameError {

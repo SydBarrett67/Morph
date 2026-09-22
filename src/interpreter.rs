@@ -1,4 +1,4 @@
-use crate::ast::{ Expression, Statement, Operator };
+use crate::ast::{ Expression, Statement, Operator, Literal, Type };
 
 use crate::scope::RuntimeScope;
 
@@ -16,16 +16,16 @@ pub enum Value {
 
 pub struct Interpreter {
     ast: Statement,
-    env: RuntimeScope,
+    pub env: RuntimeScope,
     depth: usize
 }
 
 impl Interpreter {
     // Constructor
-    pub fn new(ast: Statement, env: RuntimeScope) -> Self {
+    pub fn new(ast: Statement) -> Self {
         Self {
             ast: ast,
-            env: env,
+            env: RuntimeScope::new(),
             depth: 0
         }
     }
@@ -34,13 +34,23 @@ impl Interpreter {
         match statement {
 
             // Literal (any type)
-            Expression::Literal(value) => {
-                Ok(Value::String(value.clone()))
+            Expression::Literal(literal) => {
+                match literal {
+                    Literal::Int(number) => Ok(Value::Int(*number)),
+                    Literal::String(string) => Ok(Value::String(string.to_string())),
+                    Literal::Bool(bool_value) => Ok(Value::Bool(*bool_value)),
+                }
             }
 
             // Idenfier, resolve
-            Expression::Identifier(name) => {
-                let scope = match self.values.get(self.depth) {
+            Expression::Identifier{
+                name: String,
+                ty
+            } => {
+                /*
+                TODO: 
+                write runtimescope::get()
+                let scope = match self.env.get(self.depth) {
                     Some(scope) => scope,
                     None => {
                         return Err(
@@ -50,7 +60,7 @@ impl Interpreter {
                         );
                     }
                 };
-
+                
                 let value = match scope.get(name) {
                     Some(value) => value,
                     None => {
@@ -64,12 +74,13 @@ impl Interpreter {
                         );
                     }
                 };
+                */
 
-                Ok(value.clone())
+                Ok(Value::Int(1))
             }
 
             // Recursive BinExpr
-            Expression::BinaryExpression(op, lhv , rhv ) => {
+            Expression::BinaryExpression(op, lhv, rhv, _ ) => {
 
                 let lhs = self.eval_expr(lhv)?;
                 let rhs = self.eval_expr(rhv)?;
@@ -80,11 +91,7 @@ impl Interpreter {
                             Operator::Sub => Ok(Value::Int(lhs - rhs)),
                             Operator::Mul => Ok(Value::Int(lhs * rhs)),
                             Operator::Div => Ok(Value::Int(lhs / rhs)),
-                            _ => Err(
-                                InterpreterError::RuntimeError(
-                                    String::from("InterpreterError: invalid operator for int.")
-                                )
-                            )
+                            
                         }
                     }
 
@@ -129,19 +136,14 @@ impl Interpreter {
 
                         // Variable declaration
                         Statement::Let(
-                            Expression::Identifier(name),
-                            ..,
+                            name,
+                            ty,
                             value
                         ) => {
                             let value = self.eval_expr(value)?;
 
-                            self.values
-                                .get_mut(self.depth)
-                                .unwrap()
-                                .insert(
-                                    name.clone(),
-                                    value,
-                                );
+                            // TODO:
+                            // Push variables in env
                         }
 
                         _ => return Err(InterpreterError::RuntimeError(

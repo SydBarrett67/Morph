@@ -1,11 +1,3 @@
-use std::string;
-
-#[derive(Debug, Clone)]
-pub struct Symbol {
-    pub ty: Type,
-}
-
-
 #[derive(Debug, Clone)]
 pub enum Statement {
     // Scope
@@ -37,7 +29,6 @@ pub enum Expression {
     // Identifier (variables etc.)
     Identifier {
         name: String,
-        symbol: Option<Symbol>,
         ty: Option<Type>,
     },
 
