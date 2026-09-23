@@ -119,12 +119,12 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self) -> Result<(), InterpreterError>{
+    pub fn interpret(&mut self, statements: Vec<Statement>) -> Result<(), InterpreterError>{
         // Push global scope
         self.env.scopes.push(RuntimeScope::new());
 
         match &self.ast {
-            // Enter root AST node
+            // Enter scopes
             Statement::Scope(statements) => {
 
                 // Cicle through every statement
@@ -132,6 +132,13 @@ impl Interpreter {
 
                     // Pattern matching for statement types
                     match statement {
+
+                        // Enter nested scope
+                        Statement::Scope(
+                            stmnts: Vec<Statement>
+                        ) => {
+                            self.interpret();
+                        }
 
                         // Variable declaration
                         Statement::Let(
