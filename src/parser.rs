@@ -170,6 +170,8 @@ impl Parser {
                 // Comparators
                 Token::Operand(Operand::LESS)   => Operator::Less,
                 Token::Operand(Operand::MORE)   => Operator::More,
+                Token::Operand(Operand::EQCOMP) => Operator::EqComp,
+
                 _ => break,
             };
 

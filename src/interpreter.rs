@@ -76,13 +76,14 @@ impl Interpreter {
                     // Allowed operation on Int data type
                     (Value::Int(lhs), Value::Int(rhs)) => {
                         match op {
-                            Operator::Add   => Ok(Value::Int(lhs + rhs)),
-                            Operator::Sub   => Ok(Value::Int(lhs - rhs)),
-                            Operator::Mul   => Ok(Value::Int(lhs * rhs)),
-                            Operator::Div   => Ok(Value::Int(lhs / rhs)),
+                            Operator::Add       => Ok(Value::Int(lhs + rhs)),
+                            Operator::Sub       => Ok(Value::Int(lhs - rhs)),
+                            Operator::Mul       => Ok(Value::Int(lhs * rhs)),
+                            Operator::Div       => Ok(Value::Int(lhs / rhs)),
 
-                            Operator::More  => Ok(Value::Bool(lhs > rhs)),
-                            Operator::Less  => Ok(Value::Bool(lhs < rhs)),
+                            Operator::More      => Ok(Value::Bool(lhs > rhs)),
+                            Operator::Less      => Ok(Value::Bool(lhs < rhs)),
+                            Operator::EqComp    => Ok(Value::Bool(lhs == rhs)),
                             
                             _ => Err(
                                 InterpreterError::RuntimeError(
@@ -94,7 +95,8 @@ impl Interpreter {
                     // Allowed operation on String data type
                     (Value::String(lhs), Value::String(rhs)) => {
                         match op {
-                            Operator::Add => Ok(Value::String(lhs + &rhs)),
+                            Operator::Add       => Ok(Value::String(lhs + &rhs)),
+                            Operator::EqComp    => Ok(Value::Bool(lhs == rhs)),
                             _ => Err(
                                 InterpreterError::RuntimeError(
                                     String::from("InterpreterError: invalid operator for string.")
@@ -105,8 +107,9 @@ impl Interpreter {
                     // Allowed operation on Bool data type
                     (Value::Bool(lhs), Value::Bool(rhs)) => {
                         match op {
-                            Operator::Or    => Ok(Value::Bool(lhs || rhs)),
-                            Operator::And   => Ok(Value::Bool(lhs && rhs)),
+                            Operator::Or        => Ok(Value::Bool(lhs || rhs)),
+                            Operator::And       => Ok(Value::Bool(lhs && rhs)),
+                            Operator::EqComp    => Ok(Value::Bool(lhs == rhs)),
                             _ => Err(
                                 InterpreterError::RuntimeError(
                                     String::from("InterpreterError: invalid operator for string.")
@@ -288,11 +291,6 @@ impl Interpreter {
                         }
                     }
                 }
-
-                _ => return Err(InterpreterError::RuntimeError(
-                    String::from("InterpreterError: invalid statement.")
-                ))
-
             }
 
         }

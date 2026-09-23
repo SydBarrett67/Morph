@@ -1,5 +1,7 @@
-let x: int = 0;
+let x: bool = true;
 
-while x {
-
+while x == true {
+    if x == true {
+        x = false;
+    }
 }
