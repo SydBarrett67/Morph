@@ -72,6 +72,16 @@ impl SemanticAnalyzer {
                 let annotated_expr = self.analyze_expression(expr)?;
                 Ok(Statement::Assign(target, annotated_expr))
             }
+
+            Statement::If(expr, scope) => {
+                let annotated_expr = self.analyze_expression(expr)?;
+                Ok(Statement::If(annotated_expr, scope))
+            }
+
+            Statement::While(expr, scope) => {
+                let annotated_expr = self.analyze_expression(expr)?;
+                Ok(Statement::While(annotated_expr, scope))
+            }
         }
     }
 

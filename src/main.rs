@@ -19,8 +19,10 @@ use interpreter::Interpreter;
 
 
 use std::fs;
+use std::env;
 fn main() {
-    let source = fs::read_to_string("morph/test.mr").unwrap();
+    let args: Vec<String> = env::args().collect();
+    let source = fs::read_to_string(&args[1]).unwrap();
 
     println!("\n\n\n{}", source);
 
@@ -49,5 +51,5 @@ fn main() {
     let mut interpreter = Interpreter::new(ast);
 
     println!("\n\n{:?}", interpreter.interpret());
-    println!("\n\n{}", interpreter.printEnv());
+    println!("\n\n{}", interpreter.print_env());
 }

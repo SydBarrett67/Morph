@@ -133,8 +133,10 @@ impl Parser {
 
         while let Some(token_info) = self.peek() {
             let operator = match &token_info.token {
-                Token::Operand(Operand::STAR) => Operator::Mul,
-                Token::Operand(Operand::SLASH) => Operator::Div,
+                Token::Operand(Operand::STAR)   => Operator::Mul,
+                Token::Operand(Operand::SLASH)  => Operator::Div,
+
+                Token::Operand(Operand::OR)     => Operator::Or,
                 _ => break,
             };
 
@@ -158,12 +160,19 @@ impl Parser {
 
         while let Some(token_info) = self.peek() {
             let operator = match &token_info.token {
-                Token::Operand(Operand::PLUS) => Operator::Add,
-                Token::Operand(Operand::MINUS) => Operator::Sub,
+                // Classical operands
+                Token::Operand(Operand::PLUS)   => Operator::Add,
+                Token::Operand(Operand::MINUS)  => Operator::Sub,
+
+                // Boolean operands
+                Token::Operand(Operand::AND)    => Operator::And,
+
+                // Comparators
+                Token::Operand(Operand::LESS)   => Operator::Less,
+                Token::Operand(Operand::MORE)   => Operator::More,
                 _ => break,
             };
 
-            let operator = operator;
             self.consume()?;
 
             let rhs = self.parse_term()?;
@@ -333,6 +342,37 @@ impl Parser {
                 }
                 self.consume()?;
                 Statement::Scope(statements)
+            }
+
+            // If
+            Token::Keyword(Keyword::IF) => {
+                let expr = self.parse_expr()?;
+
+                let scope = self.parse_stmt()?;
+
+                Statement::If(expr, Box::new(scope))
+            }
+
+            // While
+            Token::Keyword(Keyword::WHILE) => {
+                let expr = self.parse_expr()?;
+
+                let scope = match self.parse_stmt()? {
+                    Statement::Scope(statements) => Statement::Scope(statements),
+                    _ => {
+                        return Err(
+                            ParserError::SyntaxError(
+                                String::from("While body must be a scope"),
+                                Position {
+                                    line: 0,
+                                    column: 0,
+                                }
+                            )
+                        );
+                    }
+                };
+
+                Statement::While(expr, Box::new(scope))
             }
 
             _ => {

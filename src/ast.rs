@@ -3,17 +3,35 @@ pub enum Statement {
     // Scope
     Scope(Vec<Statement>),
 
+    /*
+    
+        VARIABLE DECLARATION AND HANDLING
+
+    */
     // Variable declaration
     Let(
         String,     // Variable name
         Type,       // Declared type
         Expression  // Variable value
     ),
-
     // Variabile assignment
     Assign(
         String,
         Expression
+    ),
+
+    /*
+    
+        FLOW CONTROL
+
+    */
+    If(
+        Expression,
+        Box<Statement>
+    ),
+    While(
+        Expression,
+        Box<Statement>
     )
 }
 #[derive(Debug, Clone)]
@@ -54,8 +72,18 @@ pub enum Literal {
 
 #[derive(Debug, Clone)]
 pub enum Operator {
+    // Classical operator
     Add,
     Sub,
     Mul,
     Div,
+
+    // Boolean operator
+    Or,
+    And,
+
+    // Comparators
+    Less,
+    More,
+    EqComp
 }

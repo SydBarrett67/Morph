@@ -40,9 +40,19 @@ pub enum Keyword {
 #[derive(Debug)]
 #[derive(Clone)]
 pub enum Operand {
+    // Classical operands
     EQUALS,
     PLUS,
     MINUS,
     STAR,
-    SLASH
+    SLASH,
+
+    // Boolean operands
+    AND,
+    OR,
+
+    // Comparators
+    LESS,
+    MORE,
+    EQCOMP
 }

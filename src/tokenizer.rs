@@ -35,13 +35,22 @@ impl Tokenizer {
         match word {
             // Keywords
             "let"   => Token::Keyword(Keyword::LET),
+            "if"    => Token::Keyword(Keyword::IF), 
+            "else"  => Token::Keyword(Keyword::ELSE),
 
-            // Operands
+            // Classical operands
             "+"     => Token::Operand(Operand::PLUS),
             "-"     => Token::Operand(Operand::MINUS),
             "*"     => Token::Operand(Operand::STAR),
             "/"     => Token::Operand(Operand::SLASH),
             "="     => Token::Operand(Operand::EQUALS),
+
+            // Boolean operands
+            "and"   => Token::Operand(Operand::AND),
+            "&&"    => Token::Operand(Operand::AND),
+            "or"    => Token::Operand(Operand::OR),
+            "||"    => Token::Operand(Operand::OR),
+            "=="    => Token::Operand(Operand::EQCOMP),
 
             // Structure
             "("     => Token::OpenParen,
@@ -50,11 +59,24 @@ impl Tokenizer {
             "}"     => Token::CloseBrace,
             ";"     => Token::Semicolon,
             ":"     => Token::Colon,
+            ">"     => Token::Operand(Operand::MORE),
+            "<"     => Token::Operand(Operand::LESS),
 
             // Literal or identifier
-            _       => match word.parse::<i32>() {
-                Ok(number)  => Token::Literal(number.to_string()),
-                Err(_)      => Token::Identifier(word.to_string()),
+            _ => match word.parse::<i32>() {
+
+                Ok(number) => Token::Literal(number.to_string()),
+                Err(_) => match word {
+                    "true" | "false" => Token::Literal(word.to_string()),
+
+                    _ => {
+                        if word.starts_with("\"") && word.ends_with("\"") {
+                            Token::Literal(word.to_string())
+                        } else {
+                            Token::Identifier(word.to_string())
+                        }
+                    }
+                }
             }
         }
     }
@@ -110,8 +132,21 @@ impl Tokenizer {
                 }
 
                 // Single-character tokens
-                '+' | '-' | '/' | '*' | '=' | ';' | '(' | ')' | '{' | '}' => {
+                '+' | '-' | '/' | '*' | '=' | 
+                ';' | '(' | ')' | '{' | '}' |
+                '>' | '<' => {
                     chars_to_consume = 1;
+                }
+
+                // 2 char tokens
+                '&' | '|' => {
+                    if self.peek(1) == Some('&') {
+                        chars_to_consume = 2;
+                    } else {
+                        self.position += 1;
+                        self.column += 1;
+                        continue;
+                    }
                 }
 
                 _ => {
