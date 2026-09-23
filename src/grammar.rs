@@ -20,7 +20,7 @@ pub enum Token {
     Operand(Operand),
 
     // Single character tokens
-    Semicolon, Colon,
+    Semicolon, Colon, Comma,
     // ()
     OpenParen, CloseParen,
     // {}
@@ -30,11 +30,17 @@ pub enum Token {
 #[derive(Debug)]
 #[derive(Clone)]
 pub enum Keyword {
+    // Variable declaration
     LET,
+
     // Conditional
     IF, ELSE,
+
     // Loops
     WHILE,
+
+    // Functions
+    FUNC,
 }
 
 #[derive(Debug)]

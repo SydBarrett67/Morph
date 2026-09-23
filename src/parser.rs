@@ -1,5 +1,5 @@
 use crate::ast::Literal::{ self };
-use crate::ast::{Expression, Operator, Statement, Type };
+use crate::ast::{Expression, Operator, Statement, Type, Parameter };
 use crate::grammar::{Keyword, Operand, Position, Token, TokenInfo};
 
 #[derive(Debug)]
@@ -43,8 +43,108 @@ impl Parser {
         }
     }
 
+    pub fn parse_args(&mut self) -> Result<Vec<Parameter>, ParserError> {
+        let mut arguments = Vec::new();
+
+        loop {
+            match self.peek() {
+                // End of args, ")"
+                Some(TokenInfo {
+                    token: Token::CloseParen,
+                    ..
+                }) => {
+                    self.consume()?;
+                    break;
+                }
+
+                // Argument name
+                Some(TokenInfo {
+                    token: Token::Identifier(name),
+                    pos
+                }) => {
+                    let name = name.to_owned();
+                    self.consume()?;
+
+                    // :
+                    match self.peek() {
+                        Some(TokenInfo {
+                            token: Token::Colon,
+                            ..
+                        }) => {
+                            self.consume()?;
+                        }
+
+                        _ => {
+                            return Err(ParserError::SyntaxError(
+                                String::from("ParserError: expected ':' after argument name."),
+                                pos.clone()
+                            ));
+                        }
+                    }
+
+                    // Type
+                    let declared_type = self.consume()?;
+
+                    arguments.push(Parameter(name, declared_type));
+
+                    // ,
+                    match self.peek() {
+                        Some(TokenInfo {
+                            token: Token::Comma,
+                            ..
+                        }) => {
+                            self.consume()?;
+                        }
+
+                        Some(TokenInfo {
+                            token: Token::CloseParen,
+                            ..
+                        }) => {}
+
+                        Some(token) => {
+                            return Err(ParserError::SyntaxError(
+                                String::from("ParserError: expected ',' or ')'."),
+                                token.pos.clone()
+                            ));
+                        }
+
+                        None => {
+                            return Err(ParserError::SyntaxError(
+                                String::from("ParserError: expected ',' or ')', found EOF."),
+                                Position {
+                                    line: 0,
+                                    column: 0
+                                }
+                            ));
+                        }
+                    }
+                }
+
+                Some(token) => {
+                    return Err(ParserError::SyntaxError(
+                        String::from("ParserError: expected argument."),
+                        token.pos.clone()
+                    ));
+                }
+
+                None => {
+                    return Err(ParserError::SyntaxError(
+                        String::from("ParserError: expected ')', found EOF."),
+                        Position {
+                            line: 0,
+                            column: 0
+                        }
+                    ));
+                }
+            }
+        }
+
+        Ok(arguments)
+    }
+
     pub fn parse_factor(&mut self) -> Result<Expression, ParserError> {
         match self.peek() {
+            // Literal
             Some(TokenInfo {
                 token: Token::Literal(value),
                 ..
@@ -375,6 +475,37 @@ impl Parser {
                 };
 
                 Statement::While(expr, Box::new(scope))
+            }
+
+            // Function declaration
+            Token::Keyword(Keyword::FUNC) => {
+                // Name
+                let identifier = self.consume()?;
+                let name = match identifier.token {
+                    Token::Identifier(name) => name,
+                    _ => {
+                        return Err(ParserError::SyntaxError(
+                            String::from(
+                                "ParserError: expected identifier after 'func'.",
+                            ),
+                            Position {
+                                line: 0,
+                                column: 0,
+                            }
+                        ));
+                    }
+                };
+                // ( - Consume 
+                self.consume();
+
+                // Arguments
+                let arguments = self.parse_args()?;
+
+                Statement::FuncDecl(
+                    name,
+                    None,
+                    arguments
+                )
             }
 
             _ => {

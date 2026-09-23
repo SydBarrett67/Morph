@@ -38,6 +38,7 @@ impl Tokenizer {
             "if"    => Token::Keyword(Keyword::IF), 
             "else"  => Token::Keyword(Keyword::ELSE),
             "while" => Token::Keyword(Keyword::WHILE),
+            "func"  => Token::Keyword(Keyword::FUNC),
 
             // Classical operands
             "+"     => Token::Operand(Operand::PLUS),
@@ -60,6 +61,7 @@ impl Tokenizer {
             "}"     => Token::CloseBrace,
             ";"     => Token::Semicolon,
             ":"     => Token::Colon,
+            ","     => Token::Comma,
             ">"     => Token::Operand(Operand::MORE),
             "<"     => Token::Operand(Operand::LESS),
 
@@ -135,7 +137,7 @@ impl Tokenizer {
                 // Single-character tokens
                 '+' | '-' | '/' | '*' | '=' | 
                 ';' | '(' | ')' | '{' | '}' |
-                '>' | '<' => {
+                '>' | '<' | ',' => {
                     if self.peek(1) == Some('=') {
                         chars_to_consume = 2;
                     }

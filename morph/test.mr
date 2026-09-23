@@ -1,7 +1,5 @@
-let x: bool = true;
+func test(): int {
 
-while x == true {
-    if x == true {
-        x = false;
-    }
 }
+
+test()

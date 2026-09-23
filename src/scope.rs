@@ -17,8 +17,6 @@ impl RuntimeScope {
 
     // Get variable
     pub fn get_var(&self, name: String, depth: usize) -> Option<&Value> {
-        println!("depth: {}", depth);
-        println!("scopes: {}", self.scopes.len());
         for i in (0..=depth).rev() {
             if let Some(value) = self.scopes.get(i).unwrap().values.get(&name) {
                 return Some(value);

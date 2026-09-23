@@ -82,6 +82,8 @@ impl SemanticAnalyzer {
                 let annotated_expr = self.analyze_expression(expr)?;
                 Ok(Statement::While(annotated_expr, scope))
             }
+
+            _ => Err(NameError { msg: String::from("Boh fra se sei arrivato qui è un po' crazy") })
         }
     }
 
