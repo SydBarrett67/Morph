@@ -1,4 +1,4 @@
-use crate::ast::{ Expression, Statement, Operator, Literal, Type };
+use crate::ast::{ Expression, Statement, Operator, Literal };
 
 use crate::scope::RuntimeScope;
 
@@ -44,14 +44,11 @@ impl Interpreter {
 
             // Idenfier, resolve
             Expression::Identifier{
-                name: String,
-                ty
+                name,
+                ..
             } => {
-                /*
-                TODO: 
-                write runtimescope::get()
-                let scope = match self.env.get(self.depth) {
-                    Some(scope) => scope,
+                let scope: RuntimeScope = match self.env.getScope(self.depth) {
+                    Some(scope) => scope.clone(),
                     None => {
                         return Err(
                             InterpreterError::RuntimeError(
@@ -61,7 +58,7 @@ impl Interpreter {
                     }
                 };
                 
-                let value = match scope.get(name) {
+                let value = match scope.getVar(name.to_string()) {
                     Some(value) => value,
                     None => {
                         return Err(
@@ -74,9 +71,8 @@ impl Interpreter {
                         );
                     }
                 };
-                */
 
-                Ok(Value::Int(1))
+                Ok(value.clone())
             }
 
             // Recursive BinExpr
@@ -124,6 +120,9 @@ impl Interpreter {
     }
 
     pub fn interpret(&mut self) -> Result<(), InterpreterError>{
+        // Push global scope
+        self.env.scopes.push(RuntimeScope::new());
+
         match &self.ast {
             // Enter root AST node
             Statement::Scope(statements) => {
@@ -142,8 +141,17 @@ impl Interpreter {
                         ) => {
                             let value = self.eval_expr(value)?;
 
-                            // TODO:
-                            // Push variables in env
+                            self.env.pushVar(name.to_string(), value, self.depth);
+                        }
+
+                        // Variable assignment
+                        Statement::Assign(
+                            name,
+                            expr
+                        ) => {
+                            let value = self.eval_expr(expr)?;
+
+                            self.env.pushVar(name.to_string(), value, self.depth);
                         }
 
                         _ => return Err(InterpreterError::RuntimeError(
@@ -160,5 +168,12 @@ impl Interpreter {
                 String::from("InterpreterError: AST root node RuntimeError.")   
             )) }
         }
+    }
+
+
+
+    // Printout
+    pub fn printEnv(&self) -> String {
+        self.env.print()
     }
 }

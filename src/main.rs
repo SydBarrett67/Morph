@@ -49,5 +49,5 @@ fn main() {
     let mut interpreter = Interpreter::new(ast);
 
     println!("\n\n{:?}", interpreter.interpret());
-    //println!("\n\n{:?}", interpreter.env);
+    println!("\n\n{}", interpreter.printEnv());
 }
