@@ -137,7 +137,7 @@ impl Tokenizer {
                 // Single-character tokens
                 '+' | '-' | '/' | '*' | '=' | 
                 ';' | '(' | ')' | '{' | '}' |
-                '>' | '<' | ',' => {
+                '>' | '<' | ',' | ':' => {
                     if self.peek(1) == Some('=') {
                         chars_to_consume = 2;
                     }

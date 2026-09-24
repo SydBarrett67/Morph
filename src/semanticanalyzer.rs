@@ -83,6 +83,18 @@ impl SemanticAnalyzer {
                 Ok(Statement::While(annotated_expr, scope))
             }
 
+            Statement::FuncDecl(
+                name,
+                declared_type,
+                args,
+                scope,
+            ) => {
+
+                let annotated_scope = self.analyze_statement(*scope)?;
+
+                Ok(Statement::FuncDecl(name, declared_type, args, Box::new(annotated_scope)))
+            }
+
             _ => Err(NameError { msg: String::from("Boh fra se sei arrivato qui è un po' crazy") })
         }
     }
@@ -103,6 +115,7 @@ impl SemanticAnalyzer {
             }
 
             Expression::Literal(lit) => Ok(Expression::Literal(lit)),
+            Expression::Parameter(name, ty) => Ok(Expression::Parameter(name, ty)),
 
             Expression::BinaryExpression(op, left, right, _) => {
                 let annotated_left = self.analyze_expression(*left)?;

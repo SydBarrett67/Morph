@@ -1,6 +1,6 @@
 use std::thread::scope;
 
-use crate::ast::{ Expression, Statement, Operator, Literal };
+use crate::ast::{ Expression, Statement, Operator, Literal, Type };
 
 use crate::scope::{self, RuntimeScope};
 
@@ -14,6 +14,11 @@ pub enum Value {
     Int(i32),
     Bool(bool),
     String(String)
+}
+#[derive(Debug, Clone)]
+pub struct Function {
+    pub name: String,
+    ty: Type,
 }
 
 pub struct Interpreter {
@@ -170,6 +175,7 @@ impl Interpreter {
 
             match statement {
 
+                // Var declaration
                 Statement::Let(
                     name,
                     ..,
@@ -186,6 +192,7 @@ impl Interpreter {
 
                 }
 
+                // Var assignment
                 Statement::Assign(name, expr) => {
                     let value = self.eval_expr(expr)?;
 
@@ -202,6 +209,7 @@ impl Interpreter {
                     }
                 }
 
+                // Scope 
                 Statement::Scope(statements) => {
 
                     self.env.scopes.push(RuntimeScope::new());
@@ -292,6 +300,23 @@ impl Interpreter {
                     }
                 }
 
+                // Function declaration
+                Statement::FuncDecl(
+                    name,
+                    ty,
+                    args,
+                    scope
+                ) => {
+
+                    self.env.push_func(
+                        Function {
+                            name: name.to_string(),
+                            ty: ty.clone(),
+                        },
+                        self.depth
+                    );
+
+                }
             }
 
         }
@@ -299,7 +324,6 @@ impl Interpreter {
         Ok(())
 
     }
-
 
 
     // Printout

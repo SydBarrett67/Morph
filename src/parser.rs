@@ -47,7 +47,7 @@ impl Parser {
         let mut arguments = Vec::new();
 
         // ( - Consume 
-        self.consume();
+        let _ = self.consume();
 
         loop {
             match self.peek() {
@@ -56,7 +56,7 @@ impl Parser {
                     token: Token::CloseParen,
                     ..
                 }) => {
-                    self.consume()?;
+                    let _ = self.consume();
                     break;
                 }
 
@@ -66,12 +66,12 @@ impl Parser {
                     pos
                 }) => {
                     let name = name.to_owned();
-                    self.consume()?;
+                    self.consume();
 
                     // Type
-                    let declared_type = self.parse_type()?;
+                    let declared_type = self.parse_type().ok();
 
-                    arguments.push(Expression::Parameter(name, declared_type));
+                    arguments.push(Expression::Parameter(name, declared_type?));
 
                     // ,
                     match self.peek() {
@@ -79,48 +79,50 @@ impl Parser {
                             token: Token::Comma,
                             ..
                         }) => {
-                            self.consume()?;
+                            self.consume();
                         }
 
                         Some(TokenInfo {
                             token: Token::CloseParen,
                             ..
-                        }) => {}
+                        }) => {
+                            return None
+                        }
 
                         Some(token) => {
-                            return Err(ParserError::SyntaxError(
+                            return Some(Err(ParserError::SyntaxError(
                                 String::from("ParserError: expected ',' or ')'."),
                                 token.pos.clone()
-                            ));
+                            )));
                         }
 
                         None => {
-                            return Err(ParserError::SyntaxError(
+                            return Some(Err(ParserError::SyntaxError(
                                 String::from("ParserError: expected ',' or ')', found EOF."),
                                 Position {
                                     line: 0,
                                     column: 0
                                 }
-                            ));
+                            )));
                         }
                     }
                 }
 
                 Some(token) => {
-                    return Err(ParserError::SyntaxError(
+                    return Some(Err(ParserError::SyntaxError(
                         String::from("ParserError: expected argument."),
                         token.pos.clone()
-                    ));
+                    )));
                 }
 
                 None => {
-                    return Err(ParserError::SyntaxError(
+                    return Some(Err(ParserError::SyntaxError(
                         String::from("ParserError: expected ')', found EOF."),
                         Position {
                             line: 0,
                             column: 0
                         }
-                    ));
+                    )));
                 }
             }
         }
@@ -147,27 +149,22 @@ impl Parser {
                 token: Token::OpenBrace,
                 ..
             }) => {
-                self.consume()?;
                 return Ok(Type::VOID);
             }
 
             _ => {
                 return Err(ParserError::SyntaxError(
                     String::from("ParserError: expected ':' after identifier name."),
-                    pos.clone()
+                    Position { line: 0, column: 0}
                 ));
             }
         }
         match self.consume()? {
             TokenInfo{
                 token: Token::Identifier(ty),
-                pos: Position
+                pos
             } => {
-                match ty.as_str() {
-                    "int"       => Ok(Type::INT),
-                    "string"    => Ok(Type::STRING),
-                    "bool"      => Ok(Type::BOOL),
-                }
+                self.parse_type()
             }
 
             _ => {
@@ -175,7 +172,7 @@ impl Parser {
                     String::from(
                         "ParserError: expected type after identifier"
                     ),
-                    pos.clone()
+                    Position { line: 0, column: 0 }
                 ))
             }
         }
@@ -516,15 +513,27 @@ impl Parser {
                 };
 
                 // Arguments
-                let arguments = self.parse_args()?;
+                let arguments = match self.parse_args() {
+                    Some(field) => {
+                        Some(field?)
+                    }
+
+                    None => {
+                        None
+                    }
+                };
 
                 // Type
                 let declared_type = self.parse_type()?;
 
+                // Scope
+                let scope = self.parse_stmt()?;
+
                 Statement::FuncDecl(
                     name,
                     declared_type,
-                    arguments
+                    arguments,
+                    Box::new(scope)
                 )
             }
 

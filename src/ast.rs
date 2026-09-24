@@ -42,9 +42,14 @@ pub enum Statement {
     // Function declaration
     FuncDecl(
         String,                 // Func name
-        Type,           // Return type (optional)
-        Option<Vec<Expression>> // Arguments (optional)
+        Type,                   // Return type (optional)
+        Option<Vec<Expression>>,// Arguments (optional)
+        Box<Statement>
     )
+}
+pub struct Parameter {
+    name: String,
+    ty: Type
 }
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -65,12 +70,6 @@ pub enum Expression {
         name: String,
         ty: Option<Type>,
     },
-
-    // Function parameter
-    Parameter(
-        String,
-        Type
-    ),
 
     // Literal (any)
     Literal(Literal),
