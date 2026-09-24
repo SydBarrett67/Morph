@@ -41,15 +41,16 @@ pub enum Statement {
     */
     // Function declaration
     FuncDecl(
-        String,                 // Func name
-        Type,                   // Return type (optional)
-        Option<Vec<Expression>>,// Arguments (optional)
+        String,         // Func name
+        Type,           // Return type (optional)
+        Vec<Parameter>, // Arguments (optional)
         Box<Statement>
     )
 }
+#[derive(Debug, Clone)]
 pub struct Parameter {
-    name: String,
-    ty: Type
+    pub name: String,
+    pub ty: Type
 }
 #[derive(Debug, Clone)]
 pub enum Type {

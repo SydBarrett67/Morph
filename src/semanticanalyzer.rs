@@ -115,7 +115,6 @@ impl SemanticAnalyzer {
             }
 
             Expression::Literal(lit) => Ok(Expression::Literal(lit)),
-            Expression::Parameter(name, ty) => Ok(Expression::Parameter(name, ty)),
 
             Expression::BinaryExpression(op, left, right, _) => {
                 let annotated_left = self.analyze_expression(*left)?;

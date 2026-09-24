@@ -105,7 +105,6 @@ impl Tokenizer {
                 continue;
             }
 
-            // Salviamo la posizione INIZIALE del token
             let token_line = self.line;
             let token_column = self.column;
 
