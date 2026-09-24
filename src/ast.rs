@@ -19,10 +19,6 @@ pub enum Statement {
         String,
         Expression
     ),
-    Parameter(
-        String,
-        Type
-    ),
 
     /*
     
@@ -46,7 +42,7 @@ pub enum Statement {
     // Function declaration
     FuncDecl(
         String,                 // Func name
-        Option<Type>,           // Return type (optional)
+        Type,           // Return type (optional)
         Option<Vec<Expression>> // Arguments (optional)
     )
 }
@@ -69,6 +65,12 @@ pub enum Expression {
         name: String,
         ty: Option<Type>,
     },
+
+    // Function parameter
+    Parameter(
+        String,
+        Type
+    ),
 
     // Literal (any)
     Literal(Literal),

@@ -1,5 +1,5 @@
 use crate::ast::Literal::{ self };
-use crate::ast::{Expression, Operator, Statement, Type, Parameter };
+use crate::ast::{Expression, Operator, Statement, Type };
 use crate::grammar::{Keyword, Operand, Position, Token, TokenInfo};
 
 #[derive(Debug)]
@@ -43,8 +43,11 @@ impl Parser {
         }
     }
 
-    pub fn parse_args(&mut self) -> Result<Vec<Parameter>, ParserError> {
+    pub fn parse_args(&mut self) -> Option<Result<Vec<Expression>, ParserError>> {
         let mut arguments = Vec::new();
+
+        // ( - Consume 
+        self.consume();
 
         loop {
             match self.peek() {
@@ -65,27 +68,10 @@ impl Parser {
                     let name = name.to_owned();
                     self.consume()?;
 
-                    // :
-                    match self.peek() {
-                        Some(TokenInfo {
-                            token: Token::Colon,
-                            ..
-                        }) => {
-                            self.consume()?;
-                        }
-
-                        _ => {
-                            return Err(ParserError::SyntaxError(
-                                String::from("ParserError: expected ':' after argument name."),
-                                pos.clone()
-                            ));
-                        }
-                    }
-
                     // Type
-                    let declared_type = self.consume()?;
+                    let declared_type = self.parse_type()?;
 
-                    arguments.push(Parameter(name, declared_type));
+                    arguments.push(Expression::Parameter(name, declared_type));
 
                     // ,
                     match self.peek() {
@@ -139,7 +125,60 @@ impl Parser {
             }
         }
 
-        Ok(arguments)
+        if arguments.len() == 0 {
+            None
+        }
+        else { Some(Ok(arguments)) }
+    }
+    pub fn parse_type(&mut self) -> Result<Type, ParserError> {
+
+        // : / {
+        match self.peek() {
+            // :
+            Some(TokenInfo {
+                token: Token::Colon,
+                ..
+            }) => {
+                self.consume()?;
+            }
+
+            // {
+            Some(TokenInfo {
+                token: Token::OpenBrace,
+                ..
+            }) => {
+                self.consume()?;
+                return Ok(Type::VOID);
+            }
+
+            _ => {
+                return Err(ParserError::SyntaxError(
+                    String::from("ParserError: expected ':' after identifier name."),
+                    pos.clone()
+                ));
+            }
+        }
+        match self.consume()? {
+            TokenInfo{
+                token: Token::Identifier(ty),
+                pos: Position
+            } => {
+                match ty.as_str() {
+                    "int"       => Ok(Type::INT),
+                    "string"    => Ok(Type::STRING),
+                    "bool"      => Ok(Type::BOOL),
+                }
+            }
+
+            _ => {
+                return Err(ParserError::SyntaxError(
+                    String::from(
+                        "ParserError: expected type after identifier"
+                    ),
+                    pos.clone()
+                ))
+            }
+        }
     }
 
     pub fn parse_factor(&mut self) -> Result<Expression, ParserError> {
@@ -316,27 +355,7 @@ impl Parser {
                 };
 
                 // Type 
-                let declared_type = match declared_type.token {
-                    Token::Identifier(declared_type_str) => {
-                        match declared_type_str.as_str() {
-
-                            "int" => Type::INT,
-                            "string" => Type::STRING,
-                            "bool" => Type::BOOL,
-
-                            _ => todo!()
-                        }
-                    },
-
-                    _ => {
-                        return Err(ParserError::SyntaxError(
-                            String::from(
-                                "ParserError: expected type after identifier"
-                            ),
-                            declared_type.pos
-                        ))
-                    }
-                };
+                let declared_type = self.parse_type()?;
 
                 // Equals
                 match equals.token {
@@ -495,15 +514,16 @@ impl Parser {
                         ));
                     }
                 };
-                // ( - Consume 
-                self.consume();
 
                 // Arguments
                 let arguments = self.parse_args()?;
 
+                // Type
+                let declared_type = self.parse_type()?;
+
                 Statement::FuncDecl(
                     name,
-                    None,
+                    declared_type,
                     arguments
                 )
             }

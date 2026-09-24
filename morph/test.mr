@@ -1,5 +1,3 @@
-func test(): int {
+func add(a: int, b: int) {
 
 }
-
-test()
