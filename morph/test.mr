@@ -1,3 +1,1 @@
-func test() {
-    let x: string = "bool";
-}
+let x: string = "stringa";

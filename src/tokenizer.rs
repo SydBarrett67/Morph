@@ -62,6 +62,7 @@ impl Tokenizer {
             ";"     => Token::Semicolon,
             ":"     => Token::Colon,
             ","     => Token::Comma,
+            "\""    => Token::Quotation,
             ">"     => Token::Operand(Operand::MORE),
             "<"     => Token::Operand(Operand::LESS),
 
@@ -133,6 +134,18 @@ impl Tokenizer {
                     }
                 }
 
+                // String parsing
+                '"' => {
+                    chars_to_consume += 1;
+                    while let Some(c) = self.peek(chars_to_consume) {
+                        if c == '"' {
+                            chars_to_consume += 1;
+                            break;
+                        }
+                        chars_to_consume += 1;
+                    }
+                }
+
                 // Single-character tokens
                 '+' | '-' | '/' | '*' | '=' | 
                 ';' | '(' | ')' | '{' | '}' |
@@ -147,9 +160,6 @@ impl Tokenizer {
                 '&' | '|' => {
                     if self.peek(1) == Some('&') {
                         chars_to_consume = 2;
-                    }
-                    if self.peek(1) == Some('=') {
-
                     }
                     else {
                         self.position += 1;
