@@ -1,1 +1,6 @@
-let x: string = "stringa";
+func add(a: int, b: int): int {
+
+    return a + b;
+}
+
+add(2, 2);

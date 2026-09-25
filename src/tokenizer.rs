@@ -39,6 +39,7 @@ impl Tokenizer {
             "else"  => Token::Keyword(Keyword::ELSE),
             "while" => Token::Keyword(Keyword::WHILE),
             "func"  => Token::Keyword(Keyword::FUNC),
+            "return"=> Token::Keyword(Keyword::RETURN),
 
             // Classical operands
             "+"     => Token::Operand(Operand::PLUS),

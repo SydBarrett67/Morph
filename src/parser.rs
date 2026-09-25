@@ -245,14 +245,31 @@ impl Parser {
                 }
             }
 
-            // Var name
+            // Identifier (var / func)
             Some(TokenInfo {
                 token: Token::Identifier(name),
                 ..
             }) => {
                 let name = name.clone();
                 self.consume()?;
-                Ok(Expression::Identifier { name: name, ty: None })
+
+                // If '(' => func
+                match self.peek() {
+                    Some(TokenInfo {
+                        token: Token::OpenParen,
+                        ..
+                    }) => {
+                        
+                        let mut arguments: Vec<Expression>;
+                        while let Some(token_info) = self.peek() {
+                            arguments.push(self.parse_expr()?);
+                        }
+
+                        Ok(Expression::FuncCall( name, Box::new(arguments) ))
+                    }
+
+                    _ => Ok(Expression::Identifier { name: name, ty: None })
+                }               
             }
 
             Some(token) => Err(ParserError::SyntaxError(

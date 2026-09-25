@@ -127,6 +127,19 @@ impl SemanticAnalyzer {
                     Some(Type::INT),
                 ))
             }
+
+            Expression::FuncCall(
+                name,
+                args
+            ) => {
+
+                let mut annotated_args: Vec<Expression> = Vec::new();
+                for expr in args.iter() {
+                    annotated_args.push(self.analyze_expression(expr.clone())?);
+                }
+
+                Ok(Expression::FuncCall( name, Box::new(annotated_args) ))
+            }
         }
     }
 }

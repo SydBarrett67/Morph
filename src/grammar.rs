@@ -38,9 +38,11 @@ pub enum Keyword {
 
     // Loops
     WHILE,
+    FOR,
 
     // Functions
     FUNC,
+    RETURN,
 }
 
 #[derive(Debug)]
