@@ -17,7 +17,7 @@ pub enum Value {
 pub struct Function {
     pub name: String,
     pub args: Vec<Parameter>,
-    ty: Type,
+    pub ty: Type,
     pub body: Statement
 }
 
@@ -186,7 +186,15 @@ impl Interpreter {
                             name,
                             args
                         ) => {
-                            let body = self.env.get_func(name.to_string(), self.depth);
+                            let body = match self.env.get_func(
+                                    name.to_string(), self.depth
+                                ) {
+                                    Some(func) => {
+                                        func.body.clone()
+                                    }
+
+                                    None => todo!()
+                                };
                         }
 
                         _ => todo!()
