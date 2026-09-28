@@ -260,8 +260,8 @@ impl Parser {
                         ..
                     }) => {
                         
-                        let mut arguments: Vec<Expression>;
-                        while let Some(token_info) = self.peek() {
+                        let mut arguments: Vec<Expression> = Vec::new();
+                        while let Some(_) = self.peek() {
                             arguments.push(self.parse_expr()?);
                         }
 

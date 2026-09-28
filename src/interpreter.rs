@@ -1,6 +1,4 @@
-use std::thread::scope;
-
-use crate::ast::{ Expression, Statement, Operator, Literal, Type };
+use crate::ast::{ Expression, Literal, Operator, Parameter, Statement, Type };
 
 use crate::scope::{self, RuntimeScope};
 
@@ -18,7 +16,9 @@ pub enum Value {
 #[derive(Debug, Clone)]
 pub struct Function {
     pub name: String,
+    pub args: Vec<Parameter>,
     ty: Type,
+    pub body: Statement
 }
 
 pub struct Interpreter {
@@ -175,6 +175,24 @@ impl Interpreter {
 
             match statement {
 
+                // Standalone expression
+                Statement::Expression(
+                    expr,
+                ) => {
+                    match expr {
+
+                        // Function call evaluation
+                        Expression::FuncCall(
+                            name,
+                            args
+                        ) => {
+                            let body = self.env.get_func(name.to_string(), self.depth);
+                        }
+
+                        _ => todo!()
+                    }
+                }
+
                 // Var declaration
                 Statement::Let(
                     name,
@@ -312,6 +330,8 @@ impl Interpreter {
                         Function {
                             name: name.to_string(),
                             ty: ty.clone(),
+                            args: args.clone(),
+                            body: *scope.clone()
                         },
                         self.depth
                     );

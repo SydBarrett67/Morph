@@ -45,7 +45,8 @@ pub enum Statement {
         Type,           // Return type (optional)
         Vec<Parameter>, // Arguments (optional)
         Box<Statement>  // Function body
-    )
+    ),
+    Expression(Expression)
 }
 #[derive(Debug, Clone)]
 pub struct Parameter {
@@ -86,7 +87,8 @@ pub enum Expression {
     // Function call
     FuncCall(
         String,                 // Func name
-        Box<Vec<Expression>>    // Arguments (optional)
+        Box<Vec<Expression>>,   // Arguments (optional)
+//        Option<Type>
     )
 }
 
