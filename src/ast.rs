@@ -46,7 +46,8 @@ pub enum Statement {
         Vec<Parameter>, // Arguments (optional)
         Box<Statement>  // Function body
     ),
-    Expression(Expression)
+    Expression(Expression),
+    Return(Expression)  // Return a value from a function
 }
 #[derive(Debug, Clone)]
 pub struct Parameter {

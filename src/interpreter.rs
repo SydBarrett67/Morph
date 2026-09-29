@@ -20,7 +20,10 @@ pub struct Function {
     pub ty: Type,
     pub body: Statement
 }
-
+pub enum ExecResult {
+    Continue,
+    Return(Value)
+}
 pub struct Interpreter {
     ast: Statement,
     pub env: RuntimeScope,
@@ -140,7 +143,7 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self) -> Result<(), InterpreterError> {
+    pub fn interpret(&mut self) -> Result<ExecResult, InterpreterError> {
 
         // Push global scope
         self.env.scopes.push(RuntimeScope::new());
@@ -168,7 +171,7 @@ impl Interpreter {
     fn interpret_scope(
         &mut self,
         statements: &Vec<Statement>
-    ) -> Result<(), InterpreterError> {
+    ) -> Result<ExecResult, InterpreterError> {
 
         // Cicle through every statement
         for statement in statements {
@@ -186,15 +189,45 @@ impl Interpreter {
                             name,
                             args
                         ) => {
-                            let body = match self.env.get_func(
+                            // Fetch function from declaration
+                            let function = match self.env.get_func(
                                     name.to_string(), self.depth
                                 ) {
                                     Some(func) => {
-                                        func.body.clone()
+                                        func.clone()
                                     }
 
                                     None => todo!()
                                 };
+
+                            // Check args number
+                            if args.len() != function.args.len() {
+                                return Err(
+                                    InterpreterError::RuntimeError(
+                                        format!(
+                                            "Function '{}' expects {} arguments, got {}.",
+                                            name,
+                                            function.args.len(),
+                                            args.len()
+                                        )
+                                    )
+                                );
+                            }
+
+                            // Push values
+                            let mut values = Vec::new();
+                            for arg in args.iter() {
+                                values.push(self.eval_expr(arg)?);
+                            }
+
+                            // Push in funtion scope
+                            for (param, value) in function.args.iter().zip(values) {
+                                self.env.push_var(
+                                    param.name.clone(),
+                                    value,
+                                    self.depth
+                                );
+                            }
                         }
 
                         _ => todo!()
@@ -345,11 +378,18 @@ impl Interpreter {
                     );
 
                 }
+                
+                // Function return
+                Statement::Return(expr) => {
+                    let value = self.eval_expr(expr)?;
+                    return Ok(ExecResult::Return(value));
+                }
+            
             }
 
         }
 
-        Ok(())
+        Ok(ExecResult::Continue)
 
     }
 

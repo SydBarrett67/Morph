@@ -30,7 +30,7 @@ fn main() {
 
     let tokens = tokenizer.tokenize();
 
-    println!("\n\nTokens:\n\n{:?}", tokens);
+    //println!("\n\nTokens:\n\n{:?}", tokens);
 
     // Create AST
     let mut parser = Parser::new(tokens);
@@ -50,6 +50,6 @@ fn main() {
 
     let mut interpreter = Interpreter::new(ast);
 
-    println!("\n\n{:?}", interpreter.interpret());
+    let _ = interpreter.interpret();
     println!("\n\n{}", interpreter.print_env());
 }
