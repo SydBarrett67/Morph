@@ -43,6 +43,90 @@ impl Parser {
         }
     }
 
+    pub fn parse_call_args(&mut self) -> Result<Vec<Expression>, ParserError> {
+        let mut arguments = Vec::new();
+
+        // Consume '('
+        match self.consume()? {
+            TokenInfo {
+                token: Token::OpenParen,
+                ..
+            } => {}
+
+            token => {
+                return Err(ParserError::SyntaxError(
+                    String::from("ParserError: expected '('."),
+                    token.pos
+                ));
+            }
+        }
+
+        loop {
+            match self.peek() {
+                // Empty argument list: ()
+                Some(TokenInfo {
+                    token: Token::CloseParen,
+                    ..
+                }) => {
+                    self.consume()?;
+                    break;
+                }
+
+                // Parse one expression
+                Some(_) => {
+                    arguments.push(self.parse_expr()?);
+
+                    match self.peek() {
+                        // More arguments
+                        Some(TokenInfo {
+                            token: Token::Comma,
+                            ..
+                        }) => {
+                            self.consume()?;
+                        }
+
+                        // End of argument list
+                        Some(TokenInfo {
+                            token: Token::CloseParen,
+                            ..
+                        }) => {
+                            self.consume()?;
+                            break;
+                        }
+
+                        Some(token) => {
+                            return Err(ParserError::SyntaxError(
+                                String::from("ParserError: expected ',' or ')'."),
+                                token.pos.clone()
+                            ));
+                        }
+
+                        None => {
+                            return Err(ParserError::SyntaxError(
+                                String::from("ParserError: expected ')', found EOF."),
+                                Position {
+                                    line: 0,
+                                    column: 0
+                                }
+                            ));
+                        }
+                    }
+                }
+
+                None => {
+                    return Err(ParserError::SyntaxError(
+                        String::from("ParserError: expected ')', found EOF."),
+                        Position {
+                            line: 0,
+                            column: 0
+                        }
+                    ));
+                }
+            }
+        }
+
+        Ok(arguments)
+    }
     pub fn parse_args(&mut self) -> Result<Vec<Parameter>, ParserError> {
         let mut arguments = Vec::new();
 
@@ -259,13 +343,12 @@ impl Parser {
                         token: Token::OpenParen,
                         ..
                     }) => {
-                        
-                        let mut arguments: Vec<Expression> = Vec::new();
-                        while let Some(_) = self.peek() {
-                            arguments.push(self.parse_expr()?);
-                        }
+                        let arguments = self.parse_call_args()?;
 
-                        Ok(Expression::FuncCall( name, Box::new(arguments) ))
+                        Ok(Expression::FuncCall(
+                            name,
+                            Box::new(arguments)
+                        ))
                     }
 
                     _ => Ok(Expression::Identifier { name: name, ty: None })
@@ -419,50 +502,92 @@ impl Parser {
                 )
             }
 
-            // Assignment
+            // Identifier (assignment / function call)
             Token::Identifier(name) => {
-                let equals = self.consume()?;
 
-                match equals.token {
-                    Token::Operand(Operand::EQUALS) => {}
+                match self.peek() {
+                    // Assignment case
+                    Some( TokenInfo {
+                        token: Token::Operand(Operand::EQUALS),
+                        ..
+                    }) => {
+                        let value = self.parse_expr()?;
+
+                        match self.peek() {
+                            Some(TokenInfo {
+                                token: Token::Semicolon,
+                                ..
+                            }) => {
+                                self.consume()?;
+                            }
+
+                            _ => {
+                                return Err(ParserError::SyntaxError(
+                                    String::from(
+                                        "ParserError: expected ';' at statement end.",
+                                    ),
+                                    token.pos.clone()
+                                ));
+                            }
+                        }
+
+                        Statement::Assign(
+                            name,
+                            value,
+                        )
+                    }
+
+                    // Function call case
+                    Some( TokenInfo {
+                        token: Token::OpenParen,
+                        ..
+                    })  => {
+
+                        let args = self.parse_call_args()?;
+
+                        match self.peek() {
+                            Some(TokenInfo {
+                                token: Token::Semicolon,
+                                ..
+                            }) => {
+                                self.consume()?;
+                            }
+
+                            Some(token) => {
+                                return Err(ParserError::SyntaxError(
+                                    String::from("ParserError: expected ';' after function call."),
+                                    token.pos.clone()
+                                ));
+                            }
+
+                            None => {
+                                return Err(ParserError::SyntaxError(
+                                    String::from("ParserError: expected ';' after function call."),
+                                    Position {
+                                        line: 0,
+                                        column: 0
+                                    }
+                                ));
+                            }
+                        }
+
+                        Statement::Expression(
+                            Expression::FuncCall(
+                                name,
+                                Box::new(args)
+                            )
+                        )
+                    }
 
                     _ => {
                         return Err(ParserError::SyntaxError(
                             String::from(
                                 "ParserError: expected '=' after identifier.",
                             ),
-                            Position {
-                                line: 0,
-                                column: 0,
-                            }
+                            token.pos
                         ));
                     }
                 }
-
-                let value = self.parse_expr()?;
-
-                match self.peek() {
-                    Some(TokenInfo {
-                        token: Token::Semicolon,
-                        ..
-                    }) => {
-                        self.consume()?;
-                    }
-
-                    _ => {
-                        return Err(ParserError::SyntaxError(
-                            String::from(
-                                "ParserError: expected ';' at statement end.",
-                            ),
-                            token.pos.clone()
-                        ));
-                    }
-                }
-
-                Statement::Assign(
-                    name,
-                    value,
-                )
             }
             
             // Scope
@@ -589,6 +714,28 @@ impl Parser {
                 )
             }
 
+            // Function return value
+            Token::Keyword(Keyword::RETURN) => {
+
+                let expr = self.parse_expr()?;
+
+                match self.consume()? {
+                    TokenInfo {
+                        token: Token::Semicolon,
+                        ..
+                    } => {}
+
+                    token => {
+                        return Err(ParserError::SyntaxError(
+                            String::from("ParserError: expected ';' after return."),
+                            token.pos
+                        ));
+                    }
+                }
+
+                Statement::Return(expr)
+            }
+            
             _ => {
                 return Err(ParserError::SyntaxError(
                     String::from("ParserError: invalid statement."),

@@ -49,6 +49,12 @@ impl SemanticAnalyzer {
 
     fn analyze_statement(&mut self, stmt: Statement) -> Result<Statement, NameError> {
         match stmt {
+            Statement::Expression(expr) => {
+                let expr = self.analyze_expression(expr)?;
+
+                Ok(Statement::Expression(expr))
+            }
+
             Statement::Scope(stmts) => {
                 self.enter_scope();
                 let mut annotated_stmts = Vec::new();

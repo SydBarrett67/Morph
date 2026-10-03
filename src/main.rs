@@ -30,7 +30,7 @@ fn main() {
 
     let tokens = tokenizer.tokenize();
 
-    //println!("\n\nTokens:\n\n{:?}", tokens);
+    println!("\n\nTokens:\n\n{:?}", tokens);
 
     // Create AST
     let mut parser = Parser::new(tokens);
@@ -42,11 +42,13 @@ fn main() {
         }
     };
 
+    println!("\n\nAST:\n\n{:?}", ast);
+
+
     // Add types
     let semanticanalyzer = SemanticAnalyzer::new(ast.clone());
     let typed_ast = semanticanalyzer.analyze();
-
-    println!("\n\nAST:\n\n{:?}", typed_ast);
+   
 
     let mut interpreter = Interpreter::new(ast);
 
