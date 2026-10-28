@@ -101,6 +101,11 @@ impl SemanticAnalyzer {
                 Ok(Statement::FuncDecl(name, declared_type, args, Box::new(annotated_scope)))
             }
 
+            Statement::Return(expr) => {
+                let expr = self.analyze_expression(expr)?;
+
+                Ok(Statement::Expression(expr))
+            }
             _ => Err(NameError { msg: String::from("Boh fra se sei arrivato qui è un po' crazy") })
         }
     }

@@ -10,6 +10,7 @@ mod ast;
 mod interpreter;
 mod scope;
 mod semanticanalyzer;
+mod builtinfuncs;
 
 // Exported structs
 use tokenizer::Tokenizer;
@@ -52,6 +53,10 @@ fn main() {
 
     let mut interpreter = Interpreter::new(ast);
 
-    let _ = interpreter.interpret();
+    match interpreter.interpret() {
+        Ok(_) => println!("Program succesfully executed."),
+        Err(e) => eprintln!("Errors occured: {:?}", e),
+    }
+
     println!("\n\n{}", interpreter.print_env());
 }

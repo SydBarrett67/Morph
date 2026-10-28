@@ -1,5 +1,5 @@
 use crate::ast::{ Expression, Literal, Operator, Parameter, Statement, Type };
-
+use crate::builtinfuncs::{ print };
 use crate::scope::{self, RuntimeScope};
 
 #[derive(Debug)]
@@ -189,44 +189,69 @@ impl Interpreter {
                             name,
                             args
                         ) => {
-                            // Fetch function from declaration
-                            let function = match self.env.get_func(
-                                    name.to_string(), self.depth
-                                ) {
-                                    Some(func) => {
-                                        func.clone()
+                            let function;
+                            match name.as_str() {
+                                "print" => {
+                                    println!(args);
+                                },
+
+                                _ => {
+                                    // Fetch function from declaration 
+                                    function = match self.env.get_func(
+                                        name.to_string(), self.depth
+                                    ) {
+                                        Some(func) => {
+                                            func.clone()
+                                        }
+
+                                        None => todo!()
+                                    };
+
+                                    // Check args number
+                                    if args.len() != function.args.len() {
+                                        return Err(
+                                            InterpreterError::RuntimeError(
+                                                format!(
+                                                    "Function '{}' expects {} arguments, got {}.",
+                                                    name,
+                                                    function.args.len(),
+                                                    args.len()
+                                                )
+                                            )
+                                        );
                                     }
 
-                                    None => todo!()
-                                };
+                                    // Push values
+                                    let mut values = Vec::new();
+                                    for arg in args.iter() {
+                                        values.push(self.eval_expr(arg)?);
+                                    }
 
-                            // Check args number
-                            if args.len() != function.args.len() {
-                                return Err(
-                                    InterpreterError::RuntimeError(
-                                        format!(
-                                            "Function '{}' expects {} arguments, got {}.",
-                                            name,
-                                            function.args.len(),
-                                            args.len()
-                                        )
-                                    )
-                                );
-                            }
+                                    // Push in funtion scope
+                                    for (param, value) in function.args.iter().zip(values) {
+                                        self.env.push_var(
+                                            param.name.clone(),
+                                            value,
+                                            self.depth
+                                        );
+                                    }
 
-                            // Push values
-                            let mut values = Vec::new();
-                            for arg in args.iter() {
-                                values.push(self.eval_expr(arg)?);
-                            }
+                                    if let Statement::Scope(inner_statements) = &function.body {
+                                        self.depth += 1;
+                                        let result = self.interpret_scope(inner_statements)?;
+                                        self.depth -= 1;
 
-                            // Push in funtion scope
-                            for (param, value) in function.args.iter().zip(values) {
-                                self.env.push_var(
-                                    param.name.clone(),
-                                    value,
-                                    self.depth
-                                );
+                                        if let ExecResult::Return(val) = result {
+                                            // Per ora continuiamo, ma in futuro potresti voler restituire questo valore
+                                        }
+
+                                    } else {
+                                        return Err(InterpreterError::RuntimeError(format!(
+                                            "InterpreterError: invalid function ({}) body.",
+                                            name
+                                        )));
+                                    }
+                                }
                             }
                         }
 

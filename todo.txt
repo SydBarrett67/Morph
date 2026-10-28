@@ -1,3 +1,4 @@
 TODO:
-1 - in qualche modo bisogna fare qualcosa per parsare sti cazzo di args
-2 - return mechanics
+1 - semanticanalyzer. le inferenze di tipo sono molto indietro e anche un po' il resto, meh.
+2 - add 'print()' builtin func and builtin func recognition within namesolver?
+3 - builtins funcs like 'print' require more work
