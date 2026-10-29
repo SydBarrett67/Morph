@@ -94,7 +94,7 @@ impl Interpreter {
                             Operator::EqComp    => Ok(Value::Bool(lhs == rhs)),
                             
                             _ => Err(
-                                InterpreterError::RuntimeError(
+        InterpreterError::RuntimeError(
                                     String::from("InterpreterError: invalid operator for int.")
                                 )
                             )
@@ -191,10 +191,22 @@ impl Interpreter {
                         ) => {
                             let function;
                             match name.as_str() {
+                                // BUILT-IN FUNCTIONS
                                 "print" => {
-                                    println!(args);
+                                    for arg in (*args).iter() {
+                                        let printable = match self.eval_expr(arg)? {
+                                            
+                                            Value::String(to_print) => to_print,
+                                            Value::Int(to_print) => to_print.to_string(),
+                                            Value::Bool(to_print) => to_print.to_string(),
+
+                                        }; 
+                                        print!("{}", printable);
+                                    }
                                 },
 
+
+                                // ALL USER-DEFINED FUNCTIONS
                                 _ => {
                                     // Fetch function from declaration 
                                     function = match self.env.get_func(

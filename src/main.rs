@@ -53,9 +53,11 @@ fn main() {
 
     let mut interpreter = Interpreter::new(ast);
 
+    println!("\n\n---------------------\n\nPROGRAM OUTPUT\n\n");
+
     match interpreter.interpret() {
-        Ok(_) => println!("Program succesfully executed."),
-        Err(e) => eprintln!("Errors occured: {:?}", e),
+        Ok(_) => println!("\n\n---------------------------\n\nProgram succesfully executed."),
+        Err(e) => eprintln!("\n\n---------------------------\n\nErrors occured: {:?}", e),
     }
 
     println!("\n\n{}", interpreter.print_env());
