@@ -135,11 +135,11 @@ impl Interpreter {
             }
 
 
-            _ => { Err(
+            _ => Err(
                 InterpreterError::RuntimeError(
                     String::from("InterpreterError: Binary expression error.")
                 )
-            ) }
+            ) 
         }
     }
 
