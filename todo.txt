@@ -1,2 +1,2 @@
 TODO:
-1 - semanticanalyzer. le inferenze di tipo sono molto indietro e anche un po' il resto, meh.
+1 - ho capito il problema del semanticanalyzer, era così tanto indietro che praticamente non aveva nessuna cognizione dei parametri passati alle funzioni, chiaramente falliva

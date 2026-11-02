@@ -43,15 +43,21 @@ fn main() {
         }
     };
 
-    println!("\n\nAST:\n\n{:?}", ast);
 
 
     // Add types
     let semanticanalyzer = SemanticAnalyzer::new(ast.clone());
-    let typed_ast = semanticanalyzer.analyze();
+    let typed_ast = match semanticanalyzer.analyze() {
+        Ok(typed_ast) => typed_ast,
+        Err(err) => {
+            println!("SemanticError: {:?}", err);
+            return;
+        }
+    };
    
+    println!("\n\nAST:\n\n{:?}", typed_ast);
 
-    let mut interpreter = Interpreter::new(ast);
+    let mut interpreter = Interpreter::new(typed_ast);
 
     println!("\n\n---------------------\n\nPROGRAM OUTPUT\n\n");
 

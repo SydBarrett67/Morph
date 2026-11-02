@@ -47,6 +47,12 @@ impl SemanticAnalyzer {
         None
     }
 
+    fn analyze_parameter(&mut self, args: Vec<Paramter>) -> Result<Vec<Paramter, NameError> {
+    
+        
+
+    }
+
     fn analyze_statement(&mut self, stmt: Statement) -> Result<Statement, NameError> {
         match stmt {
             Statement::Expression(expr) => {
@@ -95,6 +101,8 @@ impl SemanticAnalyzer {
                 args,
                 scope,
             ) => {
+                
+                let annotated_args = self.analyze_paramters(args)?;
 
                 let annotated_scope = self.analyze_statement(*scope)?;
 
@@ -106,7 +114,6 @@ impl SemanticAnalyzer {
 
                 Ok(Statement::Expression(expr))
             }
-            _ => Err(NameError { msg: String::from("Boh fra se sei arrivato qui è un po' crazy") })
         }
     }
 
@@ -120,7 +127,7 @@ impl SemanticAnalyzer {
                     })
                 } else {
                     Err(NameError {
-                        msg: format!("Variabile non trovata: {}", name),
+                        msg: format!("Variable not found: {}", name),
                     })
                 }
             }
