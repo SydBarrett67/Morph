@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::ast::{Statement, Expression, Type};
+use crate::ast::{Statement, Expression, Type, Parameter};
 
 #[derive(Debug, Clone)]
 pub struct NameError {
@@ -47,7 +47,7 @@ impl SemanticAnalyzer {
         None
     }
 
-    fn analyze_parameter(&mut self, args: Vec<Paramter>) -> Result<Vec<Paramter, NameError> {
+    fn analyze_parameter(&mut self, args: Vec<Parameter>) { 
     
         
 
@@ -102,7 +102,7 @@ impl SemanticAnalyzer {
                 scope,
             ) => {
                 
-                let annotated_args = self.analyze_paramters(args)?;
+                //let annotated_args = self.analyze_parameter(args.clone())?;
 
                 let annotated_scope = self.analyze_statement(*scope)?;
 
