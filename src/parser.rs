@@ -291,7 +291,13 @@ impl Parser {
                 } 
                 // String
                 else {
-                    Literal::String(value)
+                    Literal::String(
+                        value
+                            .strip_prefix('"')
+                            .and_then(|s| s.strip_suffix('"'))
+                            .unwrap_or(&value)
+                            .to_string()
+                    )
                 };
 
                 Ok(Expression::Literal(literal))

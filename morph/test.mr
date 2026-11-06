@@ -4,4 +4,4 @@ func double(a: int): int {
 let value: int = 2;
 let x: int = double(value);
 
-print("Il doppio di", value, " è ", x);
+print("Il doppio di ", value, " è ", x);
