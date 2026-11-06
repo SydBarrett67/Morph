@@ -1,5 +1,4 @@
 use crate::ast::{ Expression, Literal, Operator, Parameter, Statement, Type };
-use crate::builtinfuncs::{ print };
 use crate::scope::{self, RuntimeScope};
 
 #[derive(Debug)]
@@ -40,7 +39,7 @@ impl Interpreter {
         }
     }
 
-    pub fn eval_expr(&self, statement: &Expression) -> Result<Value, InterpreterError> {
+    pub fn eval_expr(&mut self, statement: &Expression) -> Result<Value, InterpreterError> {
         match statement {
 
             // Literal (any type)
@@ -93,8 +92,7 @@ impl Interpreter {
                             Operator::Less      => Ok(Value::Bool(lhs < rhs)),
                             Operator::EqComp    => Ok(Value::Bool(lhs == rhs)),
                             
-                            _ => Err(
-        InterpreterError::RuntimeError(
+                            _ => Err( InterpreterError::RuntimeError(
                                     String::from("InterpreterError: invalid operator for int.")
                                 )
                             )
@@ -134,12 +132,72 @@ impl Interpreter {
                 }
             }
 
+            Expression::FuncCall(
+                name,
+                args
+            ) => {
+                // Fetch function
+                let function = match self.env.get_func(name.clone(), self.depth) {
+                    Some(func) => func.clone(),
+                    None => {
+                        return Err(InterpreterError::RuntimeError(
+                            format!("Function '{}' not found.", name)
+                        ));
+                    }
+                };
 
-            _ => Err(
-                InterpreterError::RuntimeError(
-                    String::from("InterpreterError: Binary expression error.")
-                )
-            ) 
+                // Check args number
+                if args.len() != function.args.len() {
+                    return Err(InterpreterError::RuntimeError(
+                        format!(
+                            "Function '{}' expects {} arguments, got {}.",
+                            name,
+                            function.args.len(),
+                            args.len()
+                        )
+                    ));
+                }
+
+                // Evaluate args
+                let mut values = Vec::new();
+
+                for arg in args.iter() {
+                    values.push(self.eval_expr(arg)?);
+                }
+
+                // Create scope function
+                self.env.scopes.push(RuntimeScope::new());
+                self.depth += 1;
+
+                // Args to parameter
+                for (param, value) in function.args.iter().zip(values) {
+                    self.env.push_var(
+                        param.name.clone(),
+                        value,
+                        self.depth
+                    );
+                }
+
+                // Execute body 
+                let result = match &function.body {
+                    Statement::Scope(statements) => self.interpret_scope(statements),
+                    _ => Err(InterpreterError::RuntimeError(
+                        format!("Invalid function '{}' body.", name)
+                    ))
+                };
+
+                // Cleanup  
+                self.env.scopes.pop();
+                self.depth -= 1;
+
+                // Return value
+                match result? {
+                    ExecResult::Return(value) => Ok(value),
+                    ExecResult::Continue => Err(InterpreterError::RuntimeError(
+                        format!("Function '{}' did not return a value.", name)
+                    ))
+                }
+            }
         }
     }
 
@@ -182,91 +240,33 @@ impl Interpreter {
                 Statement::Expression(
                     expr,
                 ) => {
-                    match expr {
+                    if let Expression::FuncCall(name, args) = expr {
+                        /*
+                         * BUILTIN FUNCTIONS HERE
+                         */
+                        if name == "print" {
+                            for arg in args.iter() {
+                                let printable = match self.eval_expr(arg)? {
+                                    Value::String(s) => s,
+                                    Value::Int(n) => n.to_string(),
+                                    Value::Bool(b) => b.to_string(),
+                                };
 
-                        // Function call evaluation
-                        Expression::FuncCall(
-                            name,
-                            args
-                        ) => {
-                            let function;
-                            match name.as_str() {
-                                // BUILT-IN FUNCTIONS
-                                "print" => {
-                                    for arg in (*args).iter() {
-                                        let printable = match self.eval_expr(arg)? {
-                                            
-                                            Value::String(to_print) => to_print,
-                                            Value::Int(to_print) => to_print.to_string(),
-                                            Value::Bool(to_print) => to_print.to_string(),
-
-                                        }; 
-                                        print!("{}", printable);
-                                    }
-                                },
-
-                                // ALL USER-DEFINED FUNCTIONS
-                                _ => {
-                                    // Fetch function from declaration 
-                                    function = match self.env.get_func(
-                                        name.to_string(), self.depth
-                                    ) {
-                                        Some(func) => {
-                                            func.clone()
-                                        }
-
-                                        None => todo!()
-                                    };
-
-                                    // Check args number
-                                    if args.len() != function.args.len() {
-                                        return Err(
-                                            InterpreterError::RuntimeError(
-                                                format!(
-                                                    "Function '{}' expects {} arguments, got {}.",
-                                                    name,
-                                                    function.args.len(),
-                                                    args.len()
-                                                )
-                                            )
-                                        );
-                                    }
-
-                                    // Push values
-                                    let mut values = Vec::new();
-                                    for arg in args.iter() {
-                                        values.push(self.eval_expr(arg)?);
-                                    }
-
-                                    // Push in funtion scope
-                                    for (param, value) in function.args.iter().zip(values) {
-                                        self.env.push_var(
-                                            param.name.clone(),
-                                            value,
-                                            self.depth
-                                        );
-                                    }
-
-                                    if let Statement::Scope(inner_statements) = &function.body {
-                                        self.depth += 1;
-                                        let result = self.interpret_scope(inner_statements)?;
-                                        self.depth -= 1;
-
-                                        if let ExecResult::Return(val) = result {
-                                            // Continue
-                                        }
-
-                                    } else {
-                                        return Err(InterpreterError::RuntimeError(format!(
-                                            "InterpreterError: invalid function ({}) body.",
-                                            name
-                                        )));
-                                    }
-                                }
+                                print!("{}", printable);
                             }
+                        } 
+                        /*
+                         * USER DEFINED FUNCTIONS
+                         */
+                        else {
+                            let _ = self.eval_expr(expr)?;
                         }
-
-                        _ => todo!()
+                    } else {
+                        return Err(
+                            InterpreterError::RuntimeError(
+                                format!("An expression is not allowed here.")
+                            )
+                        );
                     }
                 }
 
@@ -402,17 +402,15 @@ impl Interpreter {
                     args,
                     scope
                 ) => {
-
                     self.env.push_func(
                         Function {
-                            name: name.to_string(),
+                            name: name.clone(),
                             ty: ty.clone(),
                             args: args.clone(),
                             body: *scope.clone()
                         },
                         self.depth
                     );
-
                 }
                 
                 // Function return

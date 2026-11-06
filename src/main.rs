@@ -10,7 +10,6 @@ mod ast;
 mod interpreter;
 mod scope;
 mod semanticanalyzer;
-mod builtinfuncs;
 
 // Exported structs
 use tokenizer::Tokenizer;
@@ -59,7 +58,7 @@ fn main() {
 
     let mut interpreter = Interpreter::new(typed_ast);
 
-    println!("\n\n---------------------\n\nPROGRAM OUTPUT\n\n");
+    println!("\n\n---------------------------\n\nPROGRAM OUTPUT\n\n");
 
     match interpreter.interpret() {
         Ok(_) => println!("\n\n---------------------------\n\nProgram succesfully executed."),

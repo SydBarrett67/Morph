@@ -95,16 +95,33 @@ impl SemanticAnalyzer {
                 args,
                 scope,
             ) => {
-                
-                let annotated_scope = self.analyze_statement(*scope)?;
+                self.enter_scope();
 
-                Ok(Statement::FuncDecl(name, declared_type, args, Box::new(annotated_scope)))
+                for arg in &args {
+                    self.declare_variable(
+                        arg.name.clone(),
+                        arg.ty.clone()
+                    );
+                }
+
+                let result = self.analyze_statement(*scope);
+
+                self.exit_scope();
+
+                let annotated_scope = result?;
+
+                Ok(Statement::FuncDecl(
+                    name,
+                    declared_type,
+                    args,
+                    Box::new(annotated_scope)
+                ))
             }
 
             Statement::Return(expr) => {
                 let expr = self.analyze_expression(expr)?;
 
-                Ok(Statement::Expression(expr))
+                Ok(Statement::Return(expr))
             }
         }
     }

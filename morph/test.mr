@@ -1,5 +1,7 @@
 func double(a: int): int {
     return a * 2;
 }
+let value: int = 2;
+let x: int = double(value);
 
-let x: int = double(2);
+print("Il doppio di", value, " è ", x);
