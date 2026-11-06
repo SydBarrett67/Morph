@@ -89,7 +89,7 @@ pub enum Expression {
     FuncCall(
         String,                 // Func name
         Box<Vec<Expression>>,   // Arguments (optional)
-//        Option<Type>
+//        Option<Type> TODO
     )
 }
 

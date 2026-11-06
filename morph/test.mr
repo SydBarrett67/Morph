@@ -2,7 +2,4 @@ func double(a: int): int {
     return a * 2;
 }
 
-
 let x: int = double(2);
-
-print("Il numero è: ", x);

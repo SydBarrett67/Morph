@@ -205,7 +205,6 @@ impl Interpreter {
                                     }
                                 },
 
-
                                 // ALL USER-DEFINED FUNCTIONS
                                 _ => {
                                     // Fetch function from declaration 
@@ -254,7 +253,7 @@ impl Interpreter {
                                         self.depth -= 1;
 
                                         if let ExecResult::Return(val) = result {
-                                            // Per ora continuiamo, ma in futuro potresti voler restituire questo valore
+                                            // Continue
                                         }
 
                                     } else {

@@ -47,12 +47,6 @@ impl SemanticAnalyzer {
         None
     }
 
-    fn analyze_parameter(&mut self, args: Vec<Parameter>) { 
-    
-        
-
-    }
-
     fn analyze_statement(&mut self, stmt: Statement) -> Result<Statement, NameError> {
         match stmt {
             Statement::Expression(expr) => {
@@ -102,8 +96,6 @@ impl SemanticAnalyzer {
                 scope,
             ) => {
                 
-                //let annotated_args = self.analyze_parameter(args.clone())?;
-
                 let annotated_scope = self.analyze_statement(*scope)?;
 
                 Ok(Statement::FuncDecl(name, declared_type, args, Box::new(annotated_scope)))
@@ -150,7 +142,8 @@ impl SemanticAnalyzer {
                 name,
                 args,
             ) => {
-
+                
+                // TODO ARGS
                 let mut annotated_args: Vec<Expression> = Vec::new();
                 for expr in args.iter() {
                     annotated_args.push(self.analyze_expression(expr.clone())?);
