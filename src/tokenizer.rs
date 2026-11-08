@@ -54,6 +54,9 @@ impl Tokenizer {
             "or"    => Token::Operand(Operand::OR),
             "||"    => Token::Operand(Operand::OR),
             "=="    => Token::Operand(Operand::EQCOMP),
+            "!"     => Token::Operand(Operand::NOT),
+            ">"     => Token::Operand(Operand::MORE),
+            "<"     => Token::Operand(Operand::LESS),
 
             // Structure
             "("     => Token::OpenParen,
@@ -64,8 +67,6 @@ impl Tokenizer {
             ":"     => Token::Colon,
             ","     => Token::Comma,
             "\""    => Token::Quotation,
-            ">"     => Token::Operand(Operand::MORE),
-            "<"     => Token::Operand(Operand::LESS),
 
             // Literal or identifier
             _ => match word.parse::<i32>() {
@@ -150,7 +151,7 @@ impl Tokenizer {
                 // Single-character tokens
                 '+' | '-' | '/' | '*' | '=' | 
                 ';' | '(' | ')' | '{' | '}' |
-                '>' | '<' | ',' | ':' => {
+                '>' | '<' | ',' | ':' | '!' => {
                     if self.peek(1) == Some('=') {
                         chars_to_consume = 2;
                     }

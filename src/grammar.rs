@@ -20,7 +20,7 @@ pub enum Token {
     Operand(Operand),
 
     // Single character tokens
-    Semicolon, Colon, Comma, Quotation,
+    Semicolon, Colon, Comma, Quotation, Bang,
     // ()
     OpenParen, CloseParen,
     // {}
@@ -58,6 +58,7 @@ pub enum Operand {
     // Boolean operands
     AND,
     OR,
+    NOT,
 
     // Comparators
     LESS,

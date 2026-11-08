@@ -85,6 +85,13 @@ pub enum Expression {
         Option<Type>
     ),
 
+    // Unary expression
+    UnaryExpression(
+        Operator,
+        Box<Expression>,
+        Option<Type>
+    ),
+
     // Function call
     FuncCall(
         String,                 // Func name
@@ -112,6 +119,7 @@ pub enum Operator {
     // Boolean operator
     Or,
     And,
+    Not,
 
     // Comparators
     Less,

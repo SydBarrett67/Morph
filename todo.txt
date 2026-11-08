@@ -1,2 +1,3 @@
 TODO:
-1 - ho capito il problema del semanticanalyzer, era così tanto indietro che praticamente non aveva nessuna cognizione dei parametri passati alle funzioni, chiaramente falliva
+1 - unaryexprs are a pain, changing the parser structure for this next
+2 - eventually i'll need to refactor it all into clearly editable modules, it's starting to grow too much
